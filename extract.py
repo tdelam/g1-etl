@@ -1,4 +1,4 @@
-import petl, MySQLdb, sys
+import petl as etl, MySQLdb, sys
 
 from pymongo import MongoClient
 from sqlalchemy import *
@@ -26,5 +26,5 @@ source_tables = source_cursor.fetchall()
 # iterate through table names to copy over
 for table in source_tables:
     target_cursor.execute("drop table if exists %s" % (t[0])) # won't work with mongo
-    source_datasource = petl.fromdb(source_conn, 'select * from %s' % (t[0]))
-    petl.todb(source_datasource, target_conn, table[0], create=True, sample=10000)
+    source_datasource = etl.fromdb(source_conn, 'select * from %s' % (t[0]))
+    etl.todb(source_datasource, target_conn, table[0], create=True, sample=10000)
