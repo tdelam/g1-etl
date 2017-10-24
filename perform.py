@@ -1,5 +1,11 @@
-import petl as etl, MySQLdb, sys
+from __future__ import division, print_function, absolute_import
 
+import petl as etl
+import MySQLdb
+import sys
+import itertools
+
+from petl.io.db import DbView
 from pymongo import MongoClient
 from sqlalchemy import *
 
@@ -9,47 +15,87 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 
 
-DB_CONN = {
-    'mmj': 'dbname=mmjmenurails3_db user=root host=127.0.0.1',
-    'growone': 'mongodb://meteor:@127.0.0.1'
-}
-
-class PerformETL(object):
-
-    def __init__(self):
-        pass
-
-
-    def extract(self):
-        """
-        Grab all data from source(s).
-        """
-        pass
-
-
-    def load_rows(self):
-        """
-        Manipulate the data extracted by the previous extract method
-        """
-        pass
+def extract(table_name, show_tables=False):
+    """
+    Grab all data from source(s).
+    """
+    db = MySQLdb.connect(host="localhost",
+                     user="root",
+                     passwd="c0l3m4N",
+                     db="mmjmenu_development")
+    #table = etl.fromdb(db, 'SELECT * FROM menu_items')
+    try:
+        result = load_data(db, table_name)
+        if result:
+            # handle menu items first
+            # @TODO - convert this to be reusable method
+            transform_menu_items(db, result)
+    finally:
+        db.close()
 
 
-    def transform_rows(self):
-        """
-        Load the transformed data into the destination(s)
-        """
-        pass
+def load_data(db, table_name):
+    """
+    Manipulate the data extracted by the previous extract method
+    """
+    return etl.fromdb(db, "SELECT * from {0}".format(table_name))
 
 
-    def source_count(self):
-        """
-        Count the number of records from source(s)
-        """
-        pass
+def transform_menu_items(db, data):
+    """
+    Load the transformed data into the destination(s)
+    +-------------+--------------+------+------+------+
+    | thc_percent | thca_percent | cbn  | cbd  | cbda |
+    +=============+==============+======+======+======+
+    |         0.0 |          0.0 |  0.0 |  0.0 |  0.0 |
+    +-------------+--------------+------+------+------+
+    |         0.0 |          0.0 |  0.0 |  0.0 |  0.0 |
+    +-------------+--------------+------+------+------+
+    |         0.0 |          0.0 |  0.0 |  0.0 |  0.0 |
+    +-------------+--------------+------+------+------+
+    |         1.0 |          2.0 | 65.0 | 0.03 |  6.0 |
+    +-------------+--------------+------+------+------+
+    """
+    data_table = dbview_to_list(data)
+    
+    # cut out all the fields we don't need to load
+    menu_items = etl.cutout(data_table, 'menu_id', 'body_html', 'deduct_from_id', 
+        'tested_by', 'medicine_amount', 'medicine_measurement', 'batch_number', 
+        'barcode', 'custom_barcode', 'taxable', 'image_updated_at', 
+        'consignment', 'mmjrevu_id', 'sclabs_report_id', 
+        'override_global_dollars_to_points', 'dollars_to_points', 'ingredients',
+        'created_at', 'updated_at', 'deleted_at', 'lab_batch_number', 
+        'lab_license_number', 'activation_time', 'olcc_medical_grade', 
+        'thc_percent_min', 'thca_percent_min')
+
+    # put lab results on their own as this will be its own collection later
+    lab_results = etl.cut(menu_items, *range(11, 16))
+
+    etl.tojson(menu_items, 'dump.json', sort_keys=True)
+
+    print(open('dump.json').read())
+    
+    #print(etl.look(lab_results))
 
 
-    def destination_count(self):
-        """
-        Same as source_count but with destination(s)
-        """
-        pass
+def source_count(self):
+    """
+    Count the number of records from source(s)
+    """
+    pass
+
+
+def destination_count(self):
+    """
+    Same as source_count but with destination(s)
+    """
+    pass
+
+def dbview_to_list(data):
+    if type(data) is DbView:
+        # convert the db view to a lists of lists for petl
+        # map is quicker than list comp
+        return list(map(list, data))
+
+if __name__ == '__main__':
+    extract(sys.argv[1])
