@@ -25,9 +25,9 @@ def extract(table_name, collection):
     Grab all data from source(s).
     """
     source_db = MySQLdb.connect(host="localhost",
-                     user="root",
-                     passwd="c0l3m4N",
-                     db="mmjmenu_development")
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
@@ -38,8 +38,7 @@ def extract(table_name, collection):
         target_data = load_mongo_data(target_db, '{0}'.format(collection))
         target_ctx = load_mongo_data(target_db, 'inventory.categories')
 
-        transform_menu_items(source_data, target_data, source_ctx,
-            target_ctx)
+        transform_menu_items(source_data, target_data, source_ctx, target_ctx)
 
     finally:
         source_db.close()
@@ -61,27 +60,30 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     source_dt = dbview_to_list(source_data)
 
     # Cut out all the fields we don't need to load
-    menu_items = etl.cutout(source_dt, 'menu_id', 'body_html', 
-        'deduct_from_id', 'tested_by', 'medicine_amount', 'medicine_measurement', 
-        'batch_number', 'barcode', 'custom_barcode', 'taxable', 
-        'image_updated_at', 'consignment', 'mmjrevu_id', 'sclabs_report_id', 
-        'override_global_dollars_to_points', 'dollars_to_points', 'ingredients',
-        'created_at', 'updated_at', 'deleted_at', 'lab_batch_number', 
-        'lab_license_number', 'activation_time', 'olcc_medical_grade', 
-        'thc_percent_min', 'thca_percent_min')
+    menu_items = etl.cutout(source_dt, 'menu_id', 'body_html',
+                            'deduct_from_id', 'tested_by', 'medicine_amount',
+                            'medicine_measurement', 'batch_number', 'barcode',
+                            'custom_barcode', 'taxable', 'image_updated_at',
+                            'consignment', 'mmjrevu_id', 'sclabs_report_id',
+                            'override_global_dollars_to_points',
+                            'dollars_to_points', 'ingredients', 'created_at',
+                            'updated_at', 'deleted_at', 'lab_batch_number',
+                            'lab_license_number', 'activation_time',
+                            'olcc_medical_grade', 'thc_percent_min',
+                            'thca_percent_min')
 
-    # Two-step transform and cut. First we need to cut the name 
+    # Two-step transform and cut. First we need to cut the name
     # and id from the source data to map to.
     cut_source_cats = etl.cut(source_ctx, 'name', 'id')
     source_values = etl.values(cut_source_cats, 'name', 'id')
 
-    # Then we nede a dict of categories to compare against. 
+    # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
     source_ctx = dict([(value, id) for (value, id) in source_values])
     target_category_names = [name for name in target_ctx.distinct('name')]
 
-    # TODO - Next up... create a few products on local MMJ instance with 
-    # category in the name of the menu item. Then, write the code to look for 
+    # TODO - Next up... create a few products on local MMJ instance with
+    # category in the name of the menu item. Then, write the code to look for
     # that name against a target category name to match against.
     print(etl.look(menu_items))
 
@@ -93,27 +95,25 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
 
     # little scheme to match cats for transforming proper categories
     for item in menu_items_cat_id:
-        # Separates the dictionary's values in a list, finds the position of 
+        # Separates the dictionary's values in a list, finds the position of
         # the value and gets the key at that position to match the id
         # returns source category name to compare
-        source_cat_name = source_ctx.keys()\
-            [source_ctx.values().index(item)]
+        source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
 
         if source_cat_name in plural_categories:
             source_cat_name = singularize(source_cat_name)
-        # first condition, if the mmj category is found in g1 
+        # first condition, if the mmj category is found in g1
         # category, we'll assign it.
         if source_cat_name in target_category_names:
             # we found a category
             # TODO when transform - assign target data it's mongo id.
-            target_cat_id = target_ctx.collection.find_one(\
+            target_cat_id = target_ctx.collection.find_one(
                 {'name': source_cat_name})
 
-
-    #  Put lab results on their own as this will be its own collection later
+    # Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(menu_items, *range(11, 16))
 
-    # Rename source fields to match target fields, rename id to mmjmenuid so 
+    # Rename source fields to match target fields, rename id to mmjmenuid so
     # we can track related data
     new_header = {
         'id': 'mmjmenuid',
@@ -123,17 +123,16 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     }
 
     renamed_header = etl.rename(menu_items, new_header)
-    
     # print("this is menu items: {0}".format(etl.header(renamed_header)))
     # print("this is target data: {0}".format(etl.header(target_data)))
 
     # Transform!
-    # Need to decide what to do with categories because UOM exists on 
+    # Need to decide what to do with categories because UOM exists on
     # categories.measurement. If the category.measure is WEIGHT then we need
     # to look up settings and set default pricing tier. If it's UNIT we need
     # to transform to null.
-    #print(etl.look(menu_items))
-    
+    # print(etl.look(menu_items))
+
     # print(source_count(menu_items))
     # print(open('dump.json').read())
     # print(etl.look(lab_results))
@@ -159,16 +158,16 @@ def destination_count(self):
 def load_mongo_data(db, collection):
     """
     Data extracted from target mongo for diff
-    """ 
+    """
     # data from mongo needs to be treated differently.
     mongo_db = db.meteor
     return mongo_db[collection].find()
-    
+
 
 def load_db_data(db, table_name, from_json=False):
     """
     Data extracted from source db
-    """ 
+    """
     return etl.fromdb(db, "SELECT * from {0}".format(table_name))
 
 
