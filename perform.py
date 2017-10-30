@@ -99,12 +99,9 @@ def transform_menu_items(source_data, target_data, source_categories, target_cat
             # we found a category
             # TODO when transform - assign target data it's mongo id.
             target_cat_id = target_categories.collection.find_one({'name': source_cat_name})
-        
-
 
     #  Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(menu_items, *range(11, 16))
-
 
     # Rename source fields to match target fields, rename id to mmjmenuid so 
     # we can track related data
