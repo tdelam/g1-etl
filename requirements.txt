@@ -1,4 +1,7 @@
 MySQL-python==1.2.5
+nltk==3.2.5
+Pattern==2.6
 petl==1.1.1
 pymongo==3.5.1
+six==1.11.0
 SQLAlchemy==1.1.14
