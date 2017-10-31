@@ -9,6 +9,7 @@ import re
 
 from petl.io.db import DbView
 from petl.io.json import DictsView
+from petl.transform.basics import CutView
 
 from pymongo import MongoClient
 from sqlalchemy import *
@@ -57,7 +58,7 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     +-------------+--------------+------+------+------+
     """
     # source data table
-    source_dt = dbview_to_list(source_data)
+    source_dt = view_to_list(source_data)
 
     # Cut out all the fields we don't need to load
     menu_items = etl.cutout(source_dt, 'menu_id', 'body_html',
@@ -76,16 +77,13 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     # and id from the source data to map to.
     cut_source_cats = etl.cut(source_ctx, 'name', 'id')
     source_values = etl.values(cut_source_cats, 'name', 'id')
+    source_product_names = etl.values(menu_items, 'name')
+    source_desc = etl.values(menu_items, 'body')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
     source_ctx = dict([(value, id) for (value, id) in source_values])
     target_category_names = [name for name in target_ctx.distinct('name')]
-
-    # TODO - Next up... create a few products on local MMJ instance with
-    # category in the name of the menu item. Then, write the code to look for
-    # that name against a target category name to match against.
-    print(etl.look(menu_items))
 
     # find the menu item category id
     menu_items_cat_id = etl.values(menu_items, 'category_id')
@@ -109,6 +107,27 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
             # TODO when transform - assign target data it's mongo id.
             target_cat_id = target_ctx.collection.find_one(
                 {'name': source_cat_name})
+        
+    # second condition, if mmj product genetics field 
+    # contains any of the g1 category names.
+    genetics = etl.facet(menu_items, 'genetics')
+    for genetic in genetics.keys():
+        if genetic and genetic in target_category_names:
+            print(genetic)
+
+    # third condition, if mmj product name contains any 
+    # of the g1 category names
+    product_names = etl.facet(menu_items, 'name')
+    for name in product_names:
+        if name:
+            split_names = name.split(" ")
+            for cat in split_names:
+                if cat in target_category_names:
+                    print(name)
+
+    # fourth condition, if mmj product description
+    # contains 1 (first instance) of the g1 category names
+    # 
 
     # Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(menu_items, *range(11, 16))
@@ -171,9 +190,9 @@ def load_db_data(db, table_name, from_json=False):
     return etl.fromdb(db, "SELECT * from {0}".format(table_name))
 
 
-def dbview_to_list(data):
-    if type(data) is DbView:
-        # convert the db view to a lists of lists for petl
+def view_to_list(data):
+    if type(data) is DbView or type(data) is CutView:
+        # convert the view to a lists of lists for petl
         # map is quicker than list comp
         return list(map(list, data))
 
