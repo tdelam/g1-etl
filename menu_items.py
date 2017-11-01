@@ -107,15 +107,16 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
             # TODO when transform - assign target data it's mongo id.
             target_cat_id = target_ctx.collection.find_one(
                 {'name': source_cat_name})
-        
-    # first condition, if mmj product genetics field 
+
+    # TODO - refactor this tomorrow morinng into a method so it's not so fugly
+    # first condition, if mmj product genetics field
     # contains any of the g1 category names.
     genetics = etl.facet(menu_items, 'genetics')
     for genetic in genetics.keys():
         if genetic and genetic in target_category_names:
             print(genetic)
 
-    # second condition, if mmj product name contains any 
+    # second condition, if mmj product name contains any
     # of the g1 category names
     product_names = etl.facet(menu_items, 'name')
     for name in product_names:
@@ -129,7 +130,7 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     # than 80% choose that type as the category, otherwise make it hybrid
     strain = etl.cut(menu_items, 'sativa', 'indica')
     strain_vals = etl.dicts(view_to_list(strain))
-    
+
     for strain in strain_vals.__iter__():
         if strain['sativa'] > 0 or strain['indica'] > 0:
             if strain['sativa'] >= 80:
@@ -138,7 +139,6 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
                 print("it's INDICA")
             else:
                 print("it's neither, so hybrid")
-    
 
     # Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(menu_items, *range(11, 16))
