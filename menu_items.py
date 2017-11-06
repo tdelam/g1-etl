@@ -135,8 +135,8 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
         if genetic and genetic in target_category_names:
             target_cat_id = target_ctx.collection.find_one(
                 {'name': genetic})
-
-            
+            table4 = etl.select(menu_items, 'category_id', lambda v: v.genetics == genetic)
+            print(table4.lookall())
             transformed_categories[genetic] = target_cat_id.get('_id')
 
     # print(transformed_categories)
@@ -182,22 +182,6 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
     # print(open('dump.json').read())
     # print(etl.look(lab_results))
     # etl.tojson(menu_items, 'dump.json', sort_keys=True)
-
-def traverse(o, tree_types=(list, tuple)):
-    if isinstance(o, tree_types):
-        for value in o:
-            for subvalue in traverse(value, tree_types):
-                yield subvalue
-    else:
-        yield o
-
-
-def data_to_load(data):
-    print(data)
-
-
-def category(menu_items):
-    pass
 
 
 def source_count(data):
