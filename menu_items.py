@@ -159,7 +159,10 @@ def transform_menu_items(source_data, target_data, source_ctx, target_ctx):
             split_names = name.split(" ")
             for cat in split_names:
                 if cat in target_category_names:
-                    print("name - %s" % name)
+                    target_cat_id = target_ctx.collection.find_one(
+                        {'name': name})
+
+                    print("name - %s" % target_cat_id)
 
     # third condition, calculate sativa/indica percentage, if either has more
     # than 80% choose that type as the category, otherwise make it hybrid
