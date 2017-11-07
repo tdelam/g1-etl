@@ -1,0 +1,38 @@
+vendorId,  
+updatedAt, 
+createdAt, 
+pricingTier, 
+userDefinedFields, 
+_vendorName, 
+fromConvert, 
+fixtureData, 
+categoryId, 
+fileIds, 
+unitOfMeasure, 
+description, 
+price, 
+netMarijuana, 
+dateReceived, 
+createdBy, 
+updatedBy, 
+active, 
+nameLowerCase, 
+restockLevel, 
+_categoryName, 
+name, 
+shareOnWM, 
+organizationId, 
+_id,
+createdAtEpoch, 
+suggestionHiddenAt, 
+weightPricing
+
+id, menu_id, dispensary_id, strain_id, vendor_id, name, body, body_html, indica, sativa, category_id, amount, deduct_from_id, deduct_amount, thc_percent, thca_percent, cbn, cbd, cbda, tested_by, genetics, cost_per_unit, medicine_amount, medicine_measurement, batch_number, barcode, custom_barcode, taxable, image_file_name, image_content_type, image_file_size, image_updated_at, consignment, mmjrevu_id, sclabs_report_id, override_global_dollars_to_points, dollars_to_points, ingredients, product_type, on_hold, created_at, updated_at, deleted_at, lab_batch_number, lab_license_number, activation_time, olcc_medical_grade, thc_percent_min, thca_percent_min, cbn_min, cbd_min, cbda_min, thc_percent_max, thca_percent_max, cbn_max, cbd_max, cbda_max
+
+ print("this is menu items: {0}".format(etl.header(renamed_header)))
+ print("this is target data: {0}".format(etl.header(target_data)))
+ print(etl.look(menu_items))
+ print(source_count(menu_items))
+ print(open('dump.json').read())
+ print(etl.look(lab_results))
+ etl.tojson(menu_items, 'dump.json', sort_keys=True)
