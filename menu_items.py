@@ -58,6 +58,7 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     """
     # source data table
     source_dt = view_to_list(source_data)
+
     # Cut out all the fields we don't need to load
     menu_items = etl.cutout(source_dt, 'menu_id', 'body_html',
                             'deduct_from_id', 'tested_by', 'medicine_amount',
@@ -82,13 +83,16 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     # find the menu item category id
     mmj_ids = etl.values(menu_items, 'category_id')
 
+    # conditions
     cat_prods = category_products(menu_items, mmj_ids, source_ctx, target_ctx)
     cat_genetics = genetics_products(menu_items, target_ctx)
     cat_names = category_names(menu_items, target_ctx)
 
-    # merge all 3 tables into one... git'r ready for import!
+    # merge all 3 tables into one; ready for import!
     merged_data = etl.merge(cat_prods, cat_genetics, cat_names, key='id')
-    print(merged_data.lookall())
+
+    # create "other" category, fill in None with Other and
+    # merge it in with the other data table
     other_category = {
         "_id": random_mongo_id(),
         "organizationId": "420",
@@ -99,8 +103,6 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
 
     print(menu_items.lookall())
 
-    # create "other" category, fill in None with Other and
-    # merge it in with the other data table
     etl.values(merged_data, 'category_id')
     insert_id = None
     category_exists = target_ctx.collection.find_one({"name": "Other"})
@@ -112,46 +114,25 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     for data in etl.values(merged_data, 'category_id'):
         if data is None:
             data_dict[data] = insert_id
-
-    # product_dict = {
-    #         name: product.name,
-    #     shareOnWM: false,
-    #     restockLevel: 0,
-    #     description: this.stripTags(product.body_html),
-    #     price: Number(price),
-    #     unitOfMeasure: UnitOfMeasure[uom],
-    #     netMarijuana: 0,
-    #     categoryId: product.categoryId, // Move them to uncategorized for now so they can be moved.
-    #     _categoryName: product.category,
-    #     publicImageUrl: image,
-    #     pricingTier: uom === 'GRAM' ? pricingTier : null,
-    #     weightPricing: weightPricing,
-    #     active: !product.on_hold,
-    #     stockQuantity: 0
-    # }
-
-    mapping = OrderedDict()
-    mapping["_id"] = 'random_mongo_id()'
-    mapping["id"] = "id"
-    mapping["name"] = "name"
-    mapping["organizationId"] = "420"
-    mapping["category_id"] = "category_id", lambda x: data_dict[x]
-
+    product_mapping = mappings(data_dict)
     merged_data = etl.merge(merged_data,
-                            etl.fieldmap(merged_data, mapping), key='id')
+                            etl.fieldmap(merged_data, product_mapping),
+                            key='id')
 
+    # convert from unicode to string
+    merged_data = etl.convert(merged_data, 'category_id', str)
     print(merged_data.lookall())
 
-    etl.tojson(merged_data, 'example.json', sort_keys=True)
+    etl.tojson(merged_data, 'g1.json', sort_keys=True)
 
-    json_items = open("example.json")
+    json_items = open("g1.json")
 
     parsed = json.loads(json_items.read())
 
     for item in parsed:
         item['_id'] = random_mongo_id()
         print(item)
-        target_data.collection.insert(item)
+        # target_data.collection.insert(item)
 
 
 def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
@@ -176,14 +157,10 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
 
             categories_dict[item] = target_cat_id.get('_id')
 
-    category_map = OrderedDict()
-    category_map["id"] = "id"
-    category_map["name"] = "name"
-    category_map["organizationId"] = "420"
-    category_map["category_id"] = "category_id", \
-        lambda value: categories_dict[value]
-    cat = etl.fieldmap(menu_items, category_map)
+    product_mapping = mappings(categories_dict)
+    cat = etl.fieldmap(menu_items, product_mapping)
     logger.info('category_id %s', cat)
+
     return cat
 
 
@@ -203,14 +180,9 @@ def genetics_products(menu_items, target_ctx):
             for filtered_genetic in filtered_genetics:
                 genetics_dict[filtered_genetic] = target_cat_id.get('_id')
 
-    genetics_map = OrderedDict()
-    genetics_map["id"] = "id"
-    genetics_map["name"] = "name"
-    genetics_map["organizationId"] = "420"
-    genetics_map["category_id"] = "genetics", \
-        lambda value: genetics_dict[value]
+    product_mapping = mappings(genetics_dict)
+    genetics_cats = etl.fieldmap(menu_items, product_mapping)
 
-    genetics_cats = etl.fieldmap(menu_items, genetics_map)
     return genetics_cats
 
 
@@ -228,15 +200,9 @@ def category_names(menu_items, target_ctx):
                         {'name': cat})
                     products_dict[name] = target_cat_id.get('_id')
 
-    products_map = OrderedDict()
-    products_map["id"] = "id"
-    products_map["name"] = "name"
-    products_map["organizationId"] = "420"
-    products_map["category_id"] = "name", \
-        lambda value: products_dict[value]
+    product_mapping = mappings(products_dict)
+    products_cats = etl.fieldmap(menu_items, product_mapping)
 
-    products_cats = etl.fieldmap(menu_items, products_map)
-    # print(products_dict)
     return products_cats
 
 
@@ -257,6 +223,19 @@ def strain_names(menu_items, target_ctx):
             else:
                 # hybrid
                 pass
+
+
+def mappings(assoc_dict):
+    product = {
+        "id": "id",
+        "name": "name",
+        "organizationId": "420"
+    }
+    mapping = OrderedDict(product)
+    mapping["category_id"] = "category_id", \
+        lambda cat_id: assoc_dict[cat_id]
+
+    return mapping
 
 
 def lab_results(data):
