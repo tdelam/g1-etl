@@ -7,6 +7,9 @@ import petl as etl
 import uuid
 import json
 import logging
+import logging.handlers
+import os
+import urllib
 
 
 from petl.io.db import DbView
@@ -18,23 +21,23 @@ from pattern.text.en import singularize
 
 # handle characters outside of ascii
 reload(sys)
-sys.setdefaultencoding('utf8')
+sys.setdefaultencoding('latin-1')
 
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(filename="g1-etl.log", level=logging.INFO)
+log = logging.getLogger("g1-etl")
 
 
 def extract(table_name, collection):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
@@ -82,7 +85,6 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     source_ctx = dict([(value, id) for (value, id) in source_values])
     # find the menu item category id
     mmj_ids = etl.values(menu_items, 'category_id')
-
     # conditions
     cat_prods = category_products(menu_items, mmj_ids, source_ctx, target_ctx)
     cat_genetics = genetics_products(menu_items, target_ctx)
@@ -101,8 +103,6 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
         "fixtureImage": "/northernlights/images/growone-logo-pink.svg",
     }
 
-    print(menu_items.lookall())
-
     etl.values(merged_data, 'category_id')
     insert_id = None
     category_exists = target_ctx.collection.find_one({"name": "Other"})
@@ -120,19 +120,30 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
                             key='id')
 
     # convert from unicode to string
+    merged_data = etl.convert(merged_data, 'shareOnWM', bool)
     merged_data = etl.convert(merged_data, 'category_id', str)
-    print(merged_data.lookall())
+    merged_data = etl.convert(merged_data, 'description', str)
 
-    etl.tojson(merged_data, 'g1.json', sort_keys=True)
+    images = etl.values(menu_items, 'image_file_name', 'id')
+    for image in images:
+        print(image)
+        if image:
+            print(image)
+            #image = urllib.urlretrieve("http://www.digimouth.com/news/media/2011/09/google-logo.jpg", "local-filename.jpg")
+            #https://wm-mmjmenu-images-production.s3.amazonaws.com/menu_items/images/{ID}/{FILENAME}
+
+    try:
+        etl.tojson(merged_data, 'g1.json', sort_keys=True, encoding="latin-1")
+    except UnicodeDecodeError, e:
+        log.warn("UnicodeDecodeError: ", e)
 
     json_items = open("g1.json")
-
     parsed = json.loads(json_items.read())
 
     for item in parsed:
         item['_id'] = random_mongo_id()
-        print(item)
-        # target_data.collection.insert(item)
+        #print("item: ", item)
+        target_data.collection.insert(item)
 
 
 def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
@@ -144,7 +155,12 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
         # Separates the dictionary's values in a list, finds the position of
         # the value and gets the key at that position to match the id
         # returns source category name to compare
-        source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
+        source_cat_name = None
+        try:
+            source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
+        except ValueError:
+            pass
+            log.info("Value is not in the list.", item)
         if source_cat_name in PLURAL_CATEGORIES:
             source_cat_name = singularize(source_cat_name)
         # first condition, if the mmj category is found in g1
@@ -156,10 +172,9 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
                 {'name': source_cat_name})
 
             categories_dict[item] = target_cat_id.get('_id')
-
     product_mapping = mappings(categories_dict)
     cat = etl.fieldmap(menu_items, product_mapping)
-    logger.info('category_id %s', cat)
+    logging.info('category_id %s', cat.lookall())
 
     return cat
 
@@ -228,8 +243,11 @@ def strain_names(menu_items, target_ctx):
 def mappings(assoc_dict):
     product = {
         "id": "id",
+        "shareOnWM": "0",
+        "restockLevel": "0",
+        "description": "body",
         "name": "name",
-        "organizationId": "420"
+        "organizationId": "420", # temporary
     }
     mapping = OrderedDict(product)
     mapping["category_id"] = "category_id", \
@@ -269,11 +287,11 @@ def load_mongo_data(db, collection):
     return mongo_db[collection].find()
 
 
-def load_db_data(db, table_name, from_json=False):
+def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0}".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 40".format(table_name))
 
 
 def view_to_list(data):

@@ -1,30 +1,4 @@
-+-------------+--------------+-----+-----+------+
-| thc_percent | thca_percent | cbn | cbd | cbda |
-+=============+==============+=====+=====+======+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
-|         0.0 |          0.0 | 0.0 | 0.0 |  0.0 |
-+-------------+--------------+-----+-----+------+
+('id', 'menu_id', 'dispensary_id', 'strain_id', 'vendor_id', 'name', 'body', 'body_html', 'indica', 'sativa', 'category_id', 'amount', 'deduct_from_id', 'deduct_amount', 'thc_percent', 'thca_percent', 'cbn', 'cbd', 'cbda', 'tested_by', 'genetics', 'cost_per_unit', 'medicine_amount', 'medicine_measurement', 'batch_number', 'barcode', 'custom_barcode', 'taxable', 'image_file_name', 'image_content_type', 'image_file_size', 'image_updated_at', 'consignment', 'mmjrevu_id', 'sclabs_report_id', 'override_global_dollars_to_points', 'dollars_to_points', 'ingredients', 'product_type', 'on_hold', 'created_at', 'updated_at', 'deleted_at', 'lab_batch_number', 'lab_license_number', 'activation_time', 'olcc_medical_grade', 'thc_percent_min', 'thca_percent_min', 'cbn_min', 'cbd_min', 'cbda_min', 'thc_percent_max', 'thca_percent_max', 'cbn_max', 'cbd_max', 'cbda_max')
 
 vendorId,  
 updatedAt, 
@@ -64,3 +38,21 @@ id, menu_id, dispensary_id, strain_id, vendor_id, name, body, body_html, indica,
  print(open('dump.json').read())
  print(etl.look(lab_results))
  etl.tojson(menu_items, 'dump.json', sort_keys=True)
+
+
+     # PRODUCT_DICT = {
+    #         name: product.name,
+    #     shareOnWM: false,
+    #     restockLevel: 0,
+    #     description: this.stripTags(product.body_html),
+    #     price: Number(price),
+    #     unitOfMeasure: UnitOfMeasure[uom],
+    #     netMarijuana: 0,
+    #     categoryId: product.categoryId, // Move them to uncategorized for now so they can be moved.
+    #     _categoryName: product.category,
+    #     publicImageUrl: image,
+    #     pricingTier: uom === 'GRAM' ? pricingTier : null,
+    #     weightPricing: weightPricing,
+    #     active: !product.on_hold,
+    #     stockQuantity: 0
+    # }

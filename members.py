@@ -1,27 +1,28 @@
 from __future__ import division, print_function, absolute_import
 
-import MySQLdb
+from random import randint
+
 import sys
-import itertools
+import MySQLdb
 import pymongo
-import re
+import requests
+import random
 import petl as etl
 
+from urllib import urlretrieve
 from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
+from collections import OrderedDict
 
-from pymongo import MongoClient
-from sqlalchemy import *
-
-from pattern.text.en import singularize
 
 # handle characters outside of ascii
 reload(sys)
-sys.setdefaultencoding('utf8')
+sys.setdefaultencoding('latin-1')
 
+ENV = 'development'
 
-def extract(table_name, collection):
+def extract():
     """
     Grab all data from source(s).
     """
@@ -33,10 +34,10 @@ def extract(table_name, collection):
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
     try:
-        source_data = load_db_data(source_db, table_name)
-        source_ctx = load_db_data(source_db, 'members')
+        source_data = load_db_data(source_db, 'customers')
+        source_ctx = load_db_data(source_db, 'customers')
 
-        target_data = load_mongo_data(target_db, '{0}'.format(collection))
+        target_data = load_mongo_data(target_db, 'crm.members')
         target_ctx = load_mongo_data(target_db, 'crm.members')
 
         transform_members(source_data, target_data, source_ctx, target_ctx)
@@ -52,6 +53,39 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
     """
     # source data table
     source_dt = view_to_list(source_data)
+    cut_data = [
+        'id', 'dispensary_id', 'picture_file_name', 'name', 'email',
+        'address', 'phone_number', 'dob', 'license_type', 'registry_no',
+        'membership_id', 'given_caregivership', 'tax_exempt',
+        'drivers_license_no', 'points', 'card_expires_at', 'locked_visits',
+        'locked_visits_reason', 'caregiver_id', 'picture_file_name'
+    ]
+    members = etl.cut(source_dt, cut_data)
+    """
+    Tranformations TODO:
+    1. generate uid
+    2. download picture_file_name and store them
+    3. percentOfLimit = customers.purchases.reject {
+        |obj| !(start.beginning_of_day.DateTime.now.end_of_day).cover?
+            (obj.created_at) }
+            .map(&:amount).sum) / customer.daily_purchase_limit) * 100).to_i
+    """
+    members = etl.addfield(members, 'uid')
+    members_uid = etl.convert(members, 'uid', lambda _: generate_uid())
+
+    pictures = {}
+    pics = etl.values(members_uid, 'picture_file_name', 'id')
+    pics_dict = dict([(value, id) for (value, id) in pics])
+    for pic, user_id in pics_dict.iteritems():
+        if user_id and pic:
+            download_images(user_id, pic)
+
+
+def download_images(user_id, pic):
+    url = ("https://wm-mmjmenu-images-{0}.s3.amazonaws.com/"
+           "customers/pictures/{1}/large/{2}").format(ENV, user_id, pic)
+    fullname = str(user_id) + ".jpg"
+    urlretrieve(url, fullname)
 
 
 def source_count(data):
@@ -63,7 +97,7 @@ def source_count(data):
     return None
 
 
-def destination_count(self):
+def destination_count():
     """
     Same as source_count but with destination(s)
     """
@@ -95,6 +129,13 @@ def view_to_list(data):
     if type(data) is DictsView:
         return data
 
+def generate_uid():
+    """
+    Generates UID for G1
+    """
+    range_start = 10**(8 - 1)
+    range_end = (10**8) - 1
+    return randint(range_start, range_end)
 
 if __name__ == '__main__':
-    extract(sys.argv[1], sys.argv[2])
+    extract()
