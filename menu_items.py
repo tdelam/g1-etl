@@ -26,8 +26,8 @@ sys.setdefaultencoding('latin-1')
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
-logging.basicConfig(filename="g1-etl.log", level=logging.INFO)
-log = logging.getLogger("g1-etl")
+logging.basicConfig(filename="g1-etl-menuitems.log", level=logging.INFO)
+log = logging.getLogger("g1-etl-menuitems")
 
 
 def extract(table_name, collection):
@@ -159,8 +159,7 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
         try:
             source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
         except ValueError:
-            pass
-            log.info("Value is not in the list.", item)
+            log.warn("Value is not in the list.", item)
         if source_cat_name in PLURAL_CATEGORIES:
             source_cat_name = singularize(source_cat_name)
         # first condition, if the mmj category is found in g1
