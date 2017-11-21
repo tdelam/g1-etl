@@ -85,7 +85,8 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
             pictures[user_id] = pic
     member_mapping = mappings(pictures)
     mapped_table = etl.fieldmap(members_uid, member_mapping)
-    print(mapped_table.lookall())
+    merged_data = etl.merge(members, mapped_table, key='id')
+    print(merged_data.lookall())
 
 def mappings(assoc_dict):
     member = {
