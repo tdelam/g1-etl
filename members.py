@@ -69,38 +69,51 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
     members = etl.cut(source_dt, cut_data)
     """
     Tranformations TODO:
-    1. generate uid
-    2. download picture_file_name and store them
-    3. percentOfLimit = customers.purchases.reject {
+    percentOfLimit = customers.purchases.reject {
         |obj| !(start.beginning_of_day.DateTime.now.end_of_day).cover?
             (obj.created_at) }
             .map(&:amount).sum) / customer.daily_purchase_limit) * 100).to_i
     """
     members = etl.addfield(members, 'uid')
     members_uid = etl.convert(members, 'uid', lambda _: generate_uid())
-
     pictures = {}
     pics = etl.values(members_uid, 'picture_file_name', 'id')
     pics_dict = dict([(value, id) for (value, id) in pics])
     for pic, user_id in pics_dict.iteritems():
         if user_id and pic:
             utils.download_images(ENV, user_id, pic)
+            pictures[user_id] = pic
+    member_mapping = mappings(pictures)
+    mapped_table = etl.fieldmap(members_uid, member_mapping)
+    print(mapped_table.lookall())
 
+def mappings(assoc_dict):
+    member = {
+        "id": "id",
+        "uid": "uid",
+        "organizationId": "420",  # temporary
+    }
+    mapping = OrderedDict(member)
+    mapping["picture_file_name"] = "id", \
+        lambda image: assoc_dict[image]
+    return mapping
 
-def source_count(data):
+def source_count(source_data):
     """
     Count the number of records from source(s)
     """
-    if data is not None:
-        return etl.nrows(data)
+    if source_data is not None:
+        return etl.nrows(source_data)
     return None
 
 
-def destination_count():
+def destination_count(dest_data):
     """
     Same as source_count but with destination(s)
     """
-    pass
+    if dest_data is not None:
+        return etl.nrows(dest_data)
+    return None
 
 
 def load_mongo_data(db, collection):

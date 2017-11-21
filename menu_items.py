@@ -42,7 +42,7 @@ def extract(table_name, collection):
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
     try:
-        source_data = load_db_data(source_db, table_name)
+        source_data = load_db_data(source_db, 'menu_items')
         source_ctx = load_db_data(source_db, 'categories')
 
         target_data = load_mongo_data(target_db, 'inventory.products')
@@ -123,12 +123,12 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     merged_data = etl.convert(merged_data, 'shareOnWM', bool)
     merged_data = etl.convert(merged_data, 'category_id', str)
     merged_data = etl.convert(merged_data, 'description', str)
-
     images = etl.values(menu_items, 'image_file_name', 'id')
     for image in images:
-        print(image)
+        #print(image)
         if image:
-            print(image)
+            pass
+            #print(image)
             #image = urllib.urlretrieve("http://www.digimouth.com/news/media/2011/09/google-logo.jpg", "local-filename.jpg")
             #https://wm-mmjmenu-images-production.s3.amazonaws.com/menu_items/images/{ID}/{FILENAME}
 
@@ -159,7 +159,7 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
         try:
             source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
         except ValueError:
-            log.warn("Value is not in the list.", item)
+            log.info("Value is not in the list.", item)
         if source_cat_name in PLURAL_CATEGORIES:
             source_cat_name = singularize(source_cat_name)
         # first condition, if the mmj category is found in g1
@@ -261,20 +261,22 @@ def lab_results(data):
     return lab_results
 
 
-def source_count(data):
+def source_count(source_data):
     """
     Count the number of records from source(s)
     """
-    if data is not None:
-        return etl.nrows(data)
+    if source_data is not None:
+        return etl.nrows(source_data)
     return None
 
 
-def destination_count(self):
+def destination_count(dest_data):
     """
     Same as source_count but with destination(s)
     """
-    pass
+    if dest_data is not None:
+        return etl.nrows(dest_data)
+    return None
 
 
 def load_mongo_data(db, collection):
@@ -314,4 +316,4 @@ def random_mongo_id():
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], sys.argv[2])
+    extract(sys.argv[0], sys.argv[1])
