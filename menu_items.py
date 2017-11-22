@@ -19,6 +19,9 @@ from collections import OrderedDict
 
 from pattern.text.en import singularize
 
+from utilities import utils
+
+
 # handle characters outside of ascii
 reload(sys)
 sys.setdefaultencoding('latin-1')
@@ -28,6 +31,8 @@ PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
 logging.basicConfig(filename="g1-etl-menuitems.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-menuitems")
+
+ENV = 'development'
 
 
 def extract(table_name, collection):
@@ -123,21 +128,24 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     merged_data = etl.convert(merged_data, 'shareOnWM', bool)
     merged_data = etl.convert(merged_data, 'category_id', str)
     merged_data = etl.convert(merged_data, 'description', str)
-    images = etl.values(menu_items, 'image_file_name', 'id')
-    for image in images:
-        #print(image)
-        if image:
-            pass
-            #print(image)
-            #image = urllib.urlretrieve("http://www.digimouth.com/news/media/2011/09/google-logo.jpg", "local-filename.jpg")
-            #https://wm-mmjmenu-images-production.s3.amazonaws.com/menu_items/images/{ID}/{FILENAME}
+    # images = etl.values(menu_items, 'image_file_name', 'id')
+    # images_dict = dict([(value, id) for (value, id) in images])
+    # images_map = {}
+    # for pic, user_id in images_dict.iteritems():
+    #     if user_id and pic:
+    #         utils.download_images(ENV, user_id, pic)
+    #         images_map[user_id] = pic
+    # member_mapping = mappings(images_map)
+    # print(member_mapping.lookall())
 
+    print(merged_data.lookall())
     try:
-        etl.tojson(merged_data, 'g1.json', sort_keys=True, encoding="latin-1")
+        etl.tojson(merged_data, 'g1-menu-items.json', sort_keys=True,
+                   encoding="latin-1")
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
 
-    json_items = open("g1.json")
+    json_items = open("g1-menu-items.json")
     parsed = json.loads(json_items.read())
 
     for item in parsed:
@@ -159,7 +167,8 @@ def category_products(menu_items, mmj_cat_ids, source_ctx, target_ctx):
         try:
             source_cat_name = source_ctx.keys()[source_ctx.values().index(item)]
         except ValueError:
-            log.info("Value is not in the list.", item)
+            pass
+            #log.info("Value is not in the list.", item)
         if source_cat_name in PLURAL_CATEGORIES:
             source_cat_name = singularize(source_cat_name)
         # first condition, if the mmj category is found in g1

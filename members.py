@@ -7,8 +7,10 @@ import MySQLdb
 import pymongo
 import requests
 import random
+import uuid
 import petl as etl
 import urllib2
+import json
 import logging
 import logging.handlers
 
@@ -63,10 +65,22 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
         'id', 'dispensary_id', 'picture_file_name', 'name', 'email',
         'address', 'phone_number', 'dob', 'license_type', 'registry_no',
         'membership_id', 'given_caregivership', 'tax_exempt',
-        'drivers_license_no', 'points', 'card_expires_at', 'locked_visits',
+        'drivers_license_no', 'points', 'locked_visits',
         'locked_visits_reason', 'caregiver_id', 'picture_file_name'
     ]
     members = etl.cut(source_dt, cut_data)
+
+    member_obj = {
+        "id": "id",
+        "uid": "uid",
+        "tax_exempt": "taxExempt",
+        "dispensary_id": "organizationId"
+    }
+
+    member_conversions = {
+        "tax_exempt": bool,
+        "dob": str
+    }
     """
     Tranformations TODO:
     percentOfLimit = customers.purchases.reject {
@@ -76,28 +90,41 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
     """
     members = etl.addfield(members, 'uid')
     members_uid = etl.convert(members, 'uid', lambda _: generate_uid())
+
     pictures = {}
     pics = etl.values(members_uid, 'picture_file_name', 'id')
     pics_dict = dict([(value, id) for (value, id) in pics])
     for pic, user_id in pics_dict.iteritems():
         if user_id and pic:
+            # Download images for user. ENV is development/production.
             utils.download_images(ENV, user_id, pic)
             pictures[user_id] = pic
-    member_mapping = mappings(pictures)
+    # set picture for user id and map fields
+    member_mapping = OrderedDict(member_obj)
+    member_mapping["picture_file_name"] = "id", lambda image: pictures[image]
+    #member_mapping = mappings(pictures)
     mapped_table = etl.fieldmap(members_uid, member_mapping)
-    merged_data = etl.merge(members, mapped_table, key='id')
-    print(merged_data.lookall())
 
-def mappings(assoc_dict):
-    member = {
-        "id": "id",
-        "uid": "uid",
-        "organizationId": "420",  # temporary
-    }
-    mapping = OrderedDict(member)
-    mapping["picture_file_name"] = "id", \
-        lambda image: assoc_dict[image]
-    return mapping
+    # transform some fields and merge mapped tables
+    merged_data = etl.merge(members, mapped_table, key='id')
+    merged_data = etl.convert(merged_data, member_conversions)
+
+    final_data = etl.rename(merged_data, member_obj)
+    print(final_data.lookall())
+    try:
+        etl.tojson(merged_data, 'g1-members.json',
+                   sort_keys=True, encoding="latin-1")
+    except UnicodeDecodeError, e:
+        log.warn("UnicodeDecodeError: ", e)
+
+    json_items = open("g1-members.json")
+    parsed = json.loads(json_items.read())
+
+    for item in parsed:
+        item['_id'] = random_mongo_id()
+        print("item: ", item)
+        #target_data.collection.insert(item)
+
 
 def source_count(source_data):
     """
@@ -149,6 +176,16 @@ def generate_uid():
     range_start = 10**(8 - 1)
     range_end = (10**8) - 1
     return randint(range_start, range_end)
+
+
+def random_mongo_id():
+    """
+    Returns a random string of length 17
+    """
+    random = str(uuid.uuid4())
+    random = random.replace("-", "")
+
+    return random[0:17]
 
 if __name__ == '__main__':
     extract()
