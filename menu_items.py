@@ -138,7 +138,7 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
     # member_mapping = mappings(images_map)
     # print(member_mapping.lookall())
 
-    print(merged_data.lookall())
+    #print(merged_data.lookall())
     try:
         etl.tojson(merged_data, 'g1-menu-items.json', sort_keys=True,
                    encoding="latin-1")
@@ -150,7 +150,7 @@ def transform_menu_items(source_data, source_ctx, target_ctx, target_data):
 
     for item in parsed:
         item['_id'] = random_mongo_id()
-        #print("item: ", item)
+        print("item: ", item)
         target_data.collection.insert(item)
 
 
