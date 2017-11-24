@@ -33,7 +33,9 @@ def extract():
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
+                                     "-101717-cluster.cluster-cmtxwpwvylo7"
+                                     ".us-west-2.rds.amazonaws.com",
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
