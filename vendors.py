@@ -33,12 +33,17 @@ def extract():
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
-                                     "-101717-cluster.cluster-cmtxwpwvylo7"
-                                     ".us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    # source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
+    #                                  "-101717-cluster.cluster-cmtxwpwvylo7"
+    #                                  ".us-west-2.rds.amazonaws.com",
+    #                             user="mmjmenu_app",
+    #                             passwd="V@e67dYBqcH^U7qVwqPS",
+    #                             db="mmjmenu_production")
+    source_db = MySQLdb.connect(host="localhost",
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
+
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
@@ -89,11 +94,12 @@ def transform_vendors(source_data, target_data, source_ctx, target_ctx):
     vendor_mappings['accountStatus'] = 'confirmed'
     vendor_mappings['phone'] = 'phone_number'
     vendor_mappings['licenceNumber'] = 'liscense_no'
+    vendor_mappings['zip'] = 'zip_code'
 
     vendors_fields = etl.fieldmap(vendors, vendor_mappings)
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
-    print(etl.header(merged_vendors))
+    print(merged_vendors.lookall())
 
     try:
         etl.tojson(merged_vendors, 'g1-vendors.json',
@@ -106,7 +112,16 @@ def transform_vendors(source_data, target_data, source_ctx, target_ctx):
 
     for item in parsed:
         item['_id'] = random_mongo_id()
-        target_data.collection.insert(item)
+        item['address'] = {
+            'line1': item['address'],
+            'line2': None,
+            'city': item['city'],
+            'state': item['state'],
+            'zip': item['zip'],
+            'country': item['country'],
+        }
+        print(item)
+        # target_data.collection.insert(item)
 
 
 def source_count(source_data):
