@@ -33,17 +33,12 @@ def extract():
     """
     Grab all data from source(s).
     """
-    # source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
-    #                                  "-101717-cluster.cluster-cmtxwpwvylo7"
-    #                                  ".us-west-2.rds.amazonaws.com",
-    #                             user="mmjmenu_app",
-    #                             passwd="V@e67dYBqcH^U7qVwqPS",
-    #                             db="mmjmenu_production")
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
-
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
+                                     "-101717-cluster.cluster-cmtxwpwvylo7"
+                                     ".us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
@@ -155,7 +150,7 @@ def load_db_data(db, table_name, from_json=False):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 5".format(table_name))
 
 
 def view_to_list(data):
