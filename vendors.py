@@ -32,6 +32,7 @@ log = logging.getLogger("g1-etl-vendors")
 reload(sys)
 sys.setdefaultencoding('latin-1')
 
+
 SHARED_KEY = {
     'key': '8rDLYiMzi5GqtS8Ntu7kH21bWYrHAe54'
 }
@@ -49,29 +50,19 @@ def extract(token):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-    
-    # source_db = MySQLdb.connect(host="localhost",
-    #                         user="root",
-    #                         passwd="c0l3m4N",
-    #                         db="mmjmenu_development")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
     try:
         source_data = load_db_data(source_db, 'vendors')
-        source_ctx = load_db_data(source_db, 'vendors')
-
-        target_data = load_mongo_data(target_db, 'crm.vendors')
-        target_ctx = load_mongo_data(target_db, 'crm.vendors')
-
-        transform_vendors(source_data, target_data, source_ctx, target_ctx, token)
+        transform_vendors(source_data, token)
 
     finally:
         source_db.close()
         target_db.close()
 
 
-def transform_vendors(source_data, target_data, source_ctx, target_ctx, token):
+def transform_vendors(source_data, token):
     """
     Load the transformed data into the destination(s)
     """
@@ -128,11 +119,14 @@ def transform_vendors(source_data, target_data, source_ctx, target_ctx, token):
             'zip': item['zip'],
             'country': item['country'],
         }
-        item['phone'] = [{ 'name': 'business', 
-                           'number': item['phone'], 
-                           'default': False }]
+        item['phone'] = [{
+            'name': 'business',
+            'number': item['phone'],
+            'default': False
+        }]
+
         vendor = json.dumps(item)
-        
+
         headers = {'Authorization': 'Bearer {0}'.format(token)}
         print(vendor)
 
@@ -179,16 +173,7 @@ def destination_count(dest_data):
     return None
 
 
-def load_mongo_data(db, collection):
-    """
-    Data extracted from target mongo for diff
-    """
-    # data from mongo needs to be treated differently.
-    mongo_db = db.meteor
-    return mongo_db[collection].find()
-
-
-def load_db_data(db, table_name, from_json=False):
+def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
@@ -212,24 +197,6 @@ def generate_uid():
     range_start = 10**(8 - 1)
     range_end = (10**8) - 1
     return randint(range_start, range_end)
-
-
-def convert_true(field):
-    True if field == 1 else False
-
-
-def format_address(address, vendors):
-    """
-    Address format for G1
-    """
-    address_mappings = OrderedDict()
-    address_mappings['city'] = 'city'
-    address_mappings['zip'] = 'zip_code'
-    address_mappings['state'] = 'state'
-
-    vendor = etl.fieldmap(vendors, address_mappings)
-
-    return etl.dicts(vendor)
 
 
 if __name__ == '__main__':
