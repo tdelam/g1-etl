@@ -44,7 +44,7 @@ URL = 'http://localhost:3004/api/mmjetl/load/vendors'
 STATUS_CODE = 200 #TODO: change to capture status code from API
 
 
-def extract(token):
+def extract(token, vendor):
     """
     Grab all data from source(s).
     """
@@ -59,14 +59,14 @@ def extract(token):
 
     try:
         source_data = load_db_data(source_db, 'vendors')
-        transform_vendors(source_data, token)
+        transform_vendors(source_data, token, vendor)
 
     finally:
         source_db.close()
         target_db.close()
 
 
-def transform_vendors(source_data, token):
+def transform_vendors(source_data, token, vendor):
     """
     Load the transformed data into the destination(s)
     """
@@ -105,15 +105,15 @@ def transform_vendors(source_data, token):
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
     try:
-        etl.tojson(merged_vendors, 'g1-vendors.json',
+        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'.format(vendor),
                    sort_keys=True, encoding="latin-1")
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
 
-    json_items = open("g1-vendors.json")
+    json_items = open("g1-vendors-{0}.json".format(vendor))
     parsed_vendors = json.loads(json_items.read())
 
-    vendor = []
+    vendors = []
     for item in parsed_vendors:
         item['address'] = {
             'line1': item['address'],
@@ -129,11 +129,11 @@ def transform_vendors(source_data, token):
             'default': False
         }]
 
-        vendor.append(json.dumps(item))
+        vendors.append(json.dumps(item))
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
     
-    for item in chunks({v:v for v in vendor}, 10):
+    for item in chunks({v:v for v in vendors}, 10):
         if STATUS_CODE == 200:
             # do something with chunked data
             print("-------------------CHUNKED Data---------------\n", item)
@@ -216,4 +216,4 @@ def generate_uid():
 
 
 if __name__ == '__main__':
-    extract(encode())
+    extract(encode(), sys.argv[1])
