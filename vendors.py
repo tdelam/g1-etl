@@ -106,14 +106,13 @@ def transform_vendors(source_data, target_data, source_ctx, target_ctx):
     parsed = json.loads(json_items.read())
 
     for item in parsed:
-        item['_id'] = random_mongo_id()
-        item['address'] = {
-            'line1': item['address'],
-            'line2': None,
-            'city': item['city'],
-            'state': item['state'],
-            'zip': item['zip'],
-            'country': item['country'],
+        item["address"] = {
+            "line1": item['address'],
+            "line2": None,
+            "city": item['city'],
+            "state": item['state'],
+            "zip": item['zip'],
+            "country": item['country'],
         }
         print(item)
         # target_data.collection.insert(item)
@@ -150,7 +149,7 @@ def load_db_data(db, table_name, from_json=False):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 5".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 1".format(table_name))
 
 
 def view_to_list(data):
@@ -188,16 +187,6 @@ def format_address(address, vendors):
     vendor = etl.fieldmap(vendors, address_mappings)
 
     return etl.dicts(vendor)
-
-
-def random_mongo_id():
-    """
-    Returns a random string of length 17
-    """
-    random = str(uuid.uuid4())
-    random = random.replace("-", "")
-
-    return random[0:17]
 
 
 if __name__ == '__main__':
