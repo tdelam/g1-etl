@@ -13,6 +13,39 @@ SHARED_KEY = {
 def post_vendors(token):
     url = 'http://localhost:3004/api/mmjetl/load/vendors'
     headers = {'Authorization': 'Bearer {0}'.format(token)}
+
+vendor = {  
+   "website":"http://www.google.com",
+   "uid":70727993,
+   "entityType":null,
+   "licenceNumber":"1223424213",
+   "id":1,
+   "liscense_no":"1223424213",
+   "city":"Sudbury",
+   "confirmed":1,
+   "zip":"P3C 3W3",
+   "state":"ON",
+   "unpaidBalance":null,
+   "email":"tdelam@gmail.com",
+   "zip_code":"P3C 3W3",
+   "phone_number":"107059185695",
+   "dispensary_id":1,
+   "phone":"107059185695",
+   "address":{  
+      "city":"Sudbury",
+      "zip":"P3C 3W3",
+      "country":null,
+      "line2":null,
+      "line1":"268 Albinson Street",
+      "state":"ON"
+   },
+   "categories":null,
+   "name":"Trevor Delamorandiere",
+   "categoryNames":null,
+   "country":null,
+   "accountStatus":1
+}
+
     vendor = {
         'website': '',
         'id': 29368245,
