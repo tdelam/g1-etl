@@ -22,6 +22,7 @@ from collections import OrderedDict
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from itertools import islice
 
 from utilities import utils
 
@@ -33,11 +34,14 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
+# Defaults to be changed when we have this information
 SHARED_KEY = {
     'key': '8rDLYiMzi5GqtS8Ntu7kH21bWYrHAe54'
 }
 
 URL = 'http://localhost:3004/api/mmjetl/load/vendors'
+
+STATUS_CODE = 200 #TODO: change to capture status code from API
 
 
 def extract(token):
@@ -109,7 +113,7 @@ def transform_vendors(source_data, token):
     json_items = open("g1-vendors.json")
     parsed_vendors = json.loads(json_items.read())
 
-    vendor = {}
+    vendor = []
     for item in parsed_vendors:
         item['address'] = {
             'line1': item['address'],
@@ -125,10 +129,16 @@ def transform_vendors(source_data, token):
             'default': False
         }]
 
-        vendor = json.dumps(item)
+        vendor.append(json.dumps(item))
 
-        headers = {'Authorization': 'Bearer {0}'.format(token)}
-        print(vendor)
+    headers = {'Authorization': 'Bearer {0}'.format(token)}
+    
+    for item in chunks({v:v for v in vendor}, 10):
+        if STATUS_CODE == 200:
+            # do something with chunked data
+            print("-------------------CHUNKED Data---------------\n", item)
+        else:
+            logging.warn('Chunk has failed: {0}'.format(item))
 
 
 def encode():
@@ -177,7 +187,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 50".format(table_name))
 
 
 def view_to_list(data):
@@ -188,6 +198,12 @@ def view_to_list(data):
 
     if type(data) is DictsView:
         return data
+
+
+def chunks(data, SIZE=10000):
+    it = iter(data)
+    for i in xrange(0, len(data), SIZE):
+        yield {k:data[k] for k in islice(it, SIZE)}
 
 
 def generate_uid():
