@@ -72,36 +72,36 @@ def transform_vendors(source_data, token, organization_id):
     """
     # source data table
     source_dt = view_to_list(source_data)
-    cut_data = ['id', 'dispensary_id', 'name', 'phone_number', 'email',
-                'country', 'state', 'city', 'address', 'zip_code',
+    cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number', 
+                'email', 'country', 'state', 'city', 'address', 'zip_code',
                 'liscense_no', 'confirmed', 'website']
     vendor_data = etl.cut(source_dt, cut_data)
     vendors = (
         etl
         .addfield(vendor_data, 'uid')
-        .addfield('categories')
-        .addfield('categoryNames')
-        .addfield('entityType')
-        .addfield('unpaidBalance')
         .addfield('organizationId')
+        .addfield('mmjIds')
     )
+
     address_data = etl.dicts(
         etl.cut(vendors, 'city', 'zip_code', 'state', 'country')
     )
 
     vendor_mappings = OrderedDict()
     vendor_mappings['id'] = 'id'
+    vendor_mappings['dispensary_id'] = 'dispensary_id'
     vendor_mappings['address'] = 'address'
 
     # generate uid
     vendor_mappings['uid'] = lambda _: generate_uid()
 
     # field renames
-    vendor_mappings['accountStatus'] = 'confirmed'
+    vendor_mappings['accountStatus'] = \
+        lambda x: 'ACTIVE' if x.confirmed == 1 else 'INACTIVE'
     vendor_mappings['phone'] = 'phone_number'
     vendor_mappings['licenceNumber'] = 'liscense_no'
     vendor_mappings['zip'] = 'zip_code'
-    vendor_mappings['organizationId'] = lambda _: organization_id
+    vendor_mappings['organizationId'] = organization_id
 
     vendors_fields = etl.fieldmap(vendors, vendor_mappings)
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
@@ -126,20 +126,42 @@ def transform_vendors(source_data, token, organization_id):
             'zip': item['zip'],
             'country': item['country'],
         }
+
         item['phone'] = [{
             'name': 'business',
             'number': item['phone'],
             'default': True
         }]
 
+        item['mmjIds'] = [{
+            'dispensary_id': item['dispensary_id'],
+            'id': item['id'],
+            'mmjvenu_id': item['mmjvenu_id']
+        }]
+
+        # mutate dict and remove fields that are mapped and no longer required
+        del item['zip']
+        del item['state']
+        del item['country']
+        del item['city']
+        del item['zip_code']
+        del item['phone_number']
+        del item['confirmed']
+        del item['liscense_no']
+        # delete fk's
+        del item['mmjvenu_id']
+        del item['id']
+        del item['dispensary_id']
+
+        # set up final structure for API
         vendors.append(item)
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
 
-    for item in chunks(vendors, 25):
+    for item in chunks(vendors, 5):
         if STATUS_CODE == 200:
             # Do something with chunked data
-            print("--------- CHUNKED ---------\n", json.dumps(item))
+            print(json.dumps(item))
         else:
             logging.warn('Chunk has failed: {0}'.format(item))
 
@@ -198,7 +220,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 50".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 1".format(table_name))
 
 
 def view_to_list(data):
