@@ -97,7 +97,7 @@ def transform_vendors(source_data, token, organization_id):
 
     # field renames
     vendor_mappings['accountStatus'] = \
-        lambda x: 'ACTIVE' if x.confirmed == 1 else 'INACTIVE'
+        lambda x: "ACTIVE" if x.confirmed == 1 else "INACTIVE"
     vendor_mappings['phone'] = 'phone_number'
     vendor_mappings['licenceNumber'] = 'liscense_no'
     vendor_mappings['zip'] = 'zip_code'
