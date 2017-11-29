@@ -2,10 +2,10 @@
 GrowOne ETL
 
 
-# Set up Python Virtualenv
+### Set up Python Virtualenv
 `$ [sudo] pip install virtualenv`
 
-# Set up virtualenvwrapper (optional but recommended)
+### Set up virtualenvwrapper (optional but recommended)
 `$ [sudo] pip install virtualenvwrapper`
 `$ export WORKON_HOME=~/Envs`
 `$ mkdir -p $WORKON_HOME`
@@ -38,6 +38,6 @@ Make sure so update your `~/.zshrc` or `~/.bashrc` with the following:
 `export WORKON_HOME=~/Envs`
 `source /usr/local/bin/virtualenvwrapper.sh`
 
-# Install dependencies
+### Install dependencies
 
 `workon g1-etl`
