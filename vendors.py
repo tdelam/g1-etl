@@ -41,17 +41,19 @@ SHARED_KEY = {
 
 URL = 'http://localhost:3004/api/mmjetl/load/vendors'
 
-STATUS_CODE = 200 #TODO: change to capture status code from API
+STATUS_CODE = 200  # TODO: change to capture status code from API
 
 
 def extract(token, organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
+                                     "-101717-cluster.cluster-cmtxwpwvylo7"
+                                     ".us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
@@ -105,7 +107,8 @@ def transform_vendors(source_data, token, organization_id):
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
     try:
-        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'.format(organization_id),
+        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'
+                   .format(organization_id),
                    sort_keys=True, encoding="latin-1")
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
@@ -129,18 +132,24 @@ def transform_vendors(source_data, token, organization_id):
             'default': True
         }]
 
-        vendors.append(json.dumps(item))
+        vendors.append(item)
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
-    for item in vendors:
-        print(item)
-    # for item in chunks({v:v for v in vendors}, 10):
-    #     if STATUS_CODE == 200:
-    #         # BUG - this is printing out 2 times when theres only one record 
-    #         # Do something with chunked data
-    #         print(item) 
-    #     else:
-    #         logging.warn('Chunk has failed: {0}'.format(item))
+
+    for item in chunks(vendors, 25):
+        if STATUS_CODE == 200:
+            # Do something with chunked data
+            print("--------- CHUNKED ---------\n", json.dumps(item))
+        else:
+            logging.warn('Chunk has failed: {0}'.format(item))
+
+
+def chunks(data, size):
+    """
+    chunks big data so we can send the API data chunks
+    """
+    chunk = [data[i:i + size] for i in range(0, len(data), size)]
+    return chunk
 
 
 def encode():
@@ -189,7 +198,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 1".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 50".format(table_name))
 
 
 def view_to_list(data):
@@ -200,12 +209,6 @@ def view_to_list(data):
 
     if type(data) is DictsView:
         return data
-
-
-def chunks(data, SIZE=10000):
-    it = iter(data)
-    for i in xrange(0, len(data), SIZE):
-        yield {k:data[k] for k in islice(it, SIZE)}
 
 
 def generate_uid():
