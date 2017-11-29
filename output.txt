@@ -1,7 +1,0 @@
-(
-    (1L, 1L, 1L, None, None, 'Blue Dream', '', '', 0, 0, 5L, 0.0, None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, 0.0, 1, None, '000000000001', 0, 1, None, None, None, None, 0, None, None, 0, 0.0, None, 1, 0, datetime.datetime(2017, 10, 19, 19, 59, 37), datetime.datetime(2017, 10, 19, 20, 0, 19), None, None, None, 1, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 
-
-    (2L, 1L, 1L, None, None, 'Strawberry Cough', '', '', 0, 0, 5L, 0.0, None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, 0.0, 1, None, '000000000002', 0, 1, None, None, None, None, 0, None, None, 0, 0.0, None, 1, 0, datetime.datetime(2017, 10, 19, 19, 59, 38), datetime.datetime(2017, 10, 19, 20, 0, 19), None, None, None, 1, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 
-
-    (3L, 1L, 1L, None, None, 'Headband', '', '', 0, 0, 5L, 0.0, None, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, None, None, 0.0, 0.0, 1, None, '000000000003', 0, 1, None, None, None, None, 0, None, None, 0, 0.0, None, 1, 0, datetime.datetime(2017, 10, 19, 19, 59, 39), datetime.datetime(2017, 10, 19, 20, 0, 19), None, None, None, 1, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
-)

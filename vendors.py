@@ -44,29 +44,27 @@ URL = 'http://localhost:3004/api/mmjetl/load/vendors'
 STATUS_CODE = 200 #TODO: change to capture status code from API
 
 
-def extract(token, vendor):
+def extract(token, organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground"
-                                     "-101717-cluster.cluster-cmtxwpwvylo7"
-                                     ".us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = MySQLdb.connect(host="localhost",
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
 
     target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
 
     try:
         source_data = load_db_data(source_db, 'vendors')
-        transform_vendors(source_data, token, vendor)
+        transform_vendors(source_data, token, organization_id)
 
     finally:
         source_db.close()
         target_db.close()
 
 
-def transform_vendors(source_data, token, vendor):
+def transform_vendors(source_data, token, organization_id):
     """
     Load the transformed data into the destination(s)
     """
@@ -83,6 +81,7 @@ def transform_vendors(source_data, token, vendor):
         .addfield('categoryNames')
         .addfield('entityType')
         .addfield('unpaidBalance')
+        .addfield('organizationId')
     )
     address_data = etl.dicts(
         etl.cut(vendors, 'city', 'zip_code', 'state', 'country')
@@ -100,17 +99,18 @@ def transform_vendors(source_data, token, vendor):
     vendor_mappings['phone'] = 'phone_number'
     vendor_mappings['licenceNumber'] = 'liscense_no'
     vendor_mappings['zip'] = 'zip_code'
+    vendor_mappings['organizationId'] = lambda _: organization_id
 
     vendors_fields = etl.fieldmap(vendors, vendor_mappings)
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
     try:
-        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'.format(vendor),
+        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'.format(organization_id),
                    sort_keys=True, encoding="latin-1")
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
 
-    json_items = open("g1-vendors-{0}.json".format(vendor))
+    json_items = open("g1-vendors-{0}.json".format(organization_id))
     parsed_vendors = json.loads(json_items.read())
 
     vendors = []
@@ -126,19 +126,21 @@ def transform_vendors(source_data, token, vendor):
         item['phone'] = [{
             'name': 'business',
             'number': item['phone'],
-            'default': False
+            'default': True
         }]
 
         vendors.append(json.dumps(item))
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
-    
-    for item in chunks({v:v for v in vendors}, 10):
-        if STATUS_CODE == 200:
-            # do something with chunked data
-            print("-------------------CHUNKED Data---------------\n", item)
-        else:
-            logging.warn('Chunk has failed: {0}'.format(item))
+    for item in vendors:
+        print(item)
+    # for item in chunks({v:v for v in vendors}, 10):
+    #     if STATUS_CODE == 200:
+    #         # BUG - this is printing out 2 times when theres only one record 
+    #         # Do something with chunked data
+    #         print(item) 
+    #     else:
+    #         logging.warn('Chunk has failed: {0}'.format(item))
 
 
 def encode():
@@ -187,7 +189,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 50".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 1".format(table_name))
 
 
 def view_to_list(data):
