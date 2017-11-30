@@ -26,7 +26,7 @@ from itertools import islice
 
 from utilities import utils
 
-logging.basicConfig(filename="g1-etl-vendors.log", level=logging.INFO)
+logging.basicConfig(filename="log/g1-etl-vendors.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-vendors")
 
 # handle characters outside of ascii

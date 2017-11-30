@@ -21,7 +21,7 @@ from collections import OrderedDict
 
 from utilities import utils
 
-logging.basicConfig(filename="g1-etl-members.log", level=logging.INFO)
+logging.basicConfig(filename="log/g1-etl-members.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-members")
 
 # handle characters outside of ascii
