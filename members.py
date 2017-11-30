@@ -9,7 +9,6 @@ import requests
 import random
 import uuid
 import petl as etl
-import urllib2
 import json
 import logging
 import logging.handlers
@@ -19,9 +18,9 @@ from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
 
-from utilities import utils
+from utilities import utils, g1_jwt
 
-logging.basicConfig(filename="log/g1-etl-members.log", level=logging.INFO)
+logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-members")
 
 # handle characters outside of ascii
@@ -30,7 +29,13 @@ sys.setdefaultencoding('latin-1')
 
 ENV = 'development'
 
-def extract():
+# Defaults to be changed when we have this information
+STATUS_CODE = 200  # TODO: change to capture status code from API
+
+URL = 'http://localhost:3004/api/mmjetl/load/members'
+
+
+def extract(token, organization_id):
     """
     Grab all data from source(s).
     """
@@ -39,23 +44,15 @@ def extract():
                                 passwd="c0l3m4N",
                                 db="mmjmenu_development")
 
-    target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
-
     try:
         source_data = load_db_data(source_db, 'customers')
-        source_ctx = load_db_data(source_db, 'customers')
-
-        target_data = load_mongo_data(target_db, 'crm.members')
-        target_ctx = load_mongo_data(target_db, 'crm.members')
-
-        transform_members(source_data, target_data, source_ctx, target_ctx)
+        transform_members(source_data, token, organization_id)
 
     finally:
         source_db.close()
-        target_db.close()
 
 
-def transform_members(source_data, target_data, source_ctx, target_ctx):
+def transform_members(source_data, token, organization_id):
     """
     Load the transformed data into the destination(s)
     """
@@ -81,13 +78,7 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
         "tax_exempt": bool,
         "dob": str
     }
-    """
-    Tranformations TODO:
-    percentOfLimit = customers.purchases.reject {
-        |obj| !(start.beginning_of_day.DateTime.now.end_of_day).cover?
-            (obj.created_at) }
-            .map(&:amount).sum) / customer.daily_purchase_limit) * 100).to_i
-    """
+
     members = etl.addfield(members, 'uid')
     members_uid = etl.convert(members, 'uid', lambda _: generate_uid())
 
@@ -110,20 +101,30 @@ def transform_members(source_data, target_data, source_ctx, target_ctx):
     merged_data = etl.convert(merged_data, member_conversions)
 
     final_data = etl.rename(merged_data, member_obj)
-    print(final_data.lookall())
+
     try:
-        etl.tojson(merged_data, 'g1-members.json',
+        etl.tojson(merged_data, 'g1-members-{0}.json'.format(organization_id),
                    sort_keys=True, encoding="latin-1")
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
 
-    json_items = open("g1-members.json")
-    parsed = json.loads(json_items.read())
+    json_items = open("g1-members-{0}.json".format(organization_id))
+    parsed_members = json.loads(json_items.read())
+    
+    members = []
+    for item in parsed_members:
+        # set up final structure for API
+        members.append(item)        
 
-    for item in parsed:
-        item['_id'] = random_mongo_id()
-        print("item: ", item)
-        #target_data.collection.insert(item)
+    headers = {'Authorization': 'Bearer {0}'.format(token)}
+    
+    for item in utils.chunks(members, 5):
+        if STATUS_CODE == 200:
+            # Do something with chunked data
+            print(json.dumps(item))
+            # r = requests.post(URL, data=item, headers=headers)
+        else:
+            logging.warn('Chunk has failed: {0}'.format(item))
 
 
 def source_count(source_data):
@@ -144,15 +145,6 @@ def destination_count(dest_data):
     return None
 
 
-def load_mongo_data(db, collection):
-    """
-    Data extracted from target mongo for diff
-    """
-    # data from mongo needs to be treated differently.
-    mongo_db = db.meteor
-    return mongo_db[collection].find()
-
-
 def load_db_data(db, table_name, from_json=False):
     """
     Data extracted from source db
@@ -169,6 +161,7 @@ def view_to_list(data):
     if type(data) is DictsView:
         return data
 
+
 def generate_uid():
     """
     Generates UID for G1
@@ -178,14 +171,5 @@ def generate_uid():
     return randint(range_start, range_end)
 
 
-def random_mongo_id():
-    """
-    Returns a random string of length 17
-    """
-    random = str(uuid.uuid4())
-    random = random.replace("-", "")
-
-    return random[0:17]
-
 if __name__ == '__main__':
-    extract()
+    extract(g1_jwt.jwt_encode(), sys.argv[1])

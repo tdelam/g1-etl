@@ -29,7 +29,7 @@ sys.setdefaultencoding('latin-1')
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
-logging.basicConfig(filename="log/g1-etl-menuitems.log", level=logging.INFO)
+logging.basicConfig(filename="logs/g1-etl-menuitems.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-menuitems")
 
 ENV = 'development'

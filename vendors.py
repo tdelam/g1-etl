@@ -2,7 +2,7 @@ from __future__ import division, print_function, absolute_import
 
 from random import randint
 
-import jwt
+#import jwt
 import sys
 import MySQLdb
 import pymongo
@@ -10,7 +10,6 @@ import requests
 import random
 import uuid
 import petl as etl
-import urllib2
 import json
 import logging
 import logging.handlers
@@ -19,28 +18,18 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.serialization import load_pem_private_key
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
-from itertools import islice
+from utilities import utils, g1_jwt
 
-from utilities import utils
 
-logging.basicConfig(filename="log/g1-etl-vendors.log", level=logging.INFO)
+logging.basicConfig(filename="logs/g1-etl-vendors.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-vendors")
 
 # handle characters outside of ascii
 reload(sys)
 sys.setdefaultencoding('latin-1')
 
-
-# Defaults to be changed when we have this information
-SHARED_KEY = {
-    'key': '8rDLYiMzi5GqtS8Ntu7kH21bWYrHAe54'
-}
-
 URL = 'http://localhost:3004/api/mmjetl/load/vendors'
-
+# Defaults to be changed when we have this information
 STATUS_CODE = 200  # TODO: change to capture status code from API
 
 
@@ -53,15 +42,12 @@ def extract(token, organization_id):
                                 passwd="c0l3m4N",
                                 db="mmjmenu_development")
 
-    target_db = pymongo.MongoClient("mongodb://127.0.0.1:3001")
-
     try:
         source_data = load_db_data(source_db, 'vendors')
         transform_vendors(source_data, token, organization_id)
 
     finally:
         source_db.close()
-        target_db.close()
 
 
 def transform_vendors(source_data, token, organization_id):
@@ -125,10 +111,6 @@ def transform_vendors(source_data, token, organization_id):
             'country': item['country'],
         }
 
-        # for key, value in item['address'].iteritems():
-        #     if value is None:
-        #         item['address'] = None
-
         item['phone'] = [{
             'name': 'business',
             'number': item['phone'],
@@ -160,45 +142,14 @@ def transform_vendors(source_data, token, organization_id):
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
 
-    for item in chunks(vendors, 5):
+    for item in utils.chunks(vendors, 5):
         if STATUS_CODE == 200:
             # Do something with chunked data
             print(json.dumps(item))
+            # r = requests.post(URL, data=item, headers=headers)
             #pass
         else:
             logging.warn('Chunk has failed: {0}'.format(item))
-
-
-def chunks(data, size):
-    """
-    chunks big data so we can send the API data chunks
-    """
-    chunk = [data[i:i + size] for i in range(0, len(data), size)]
-    return chunk
-
-
-def encode():
-    encode = jwt.encode(SHARED_KEY, load_private_key(), algorithm='RS256')
-    return encode
-
-
-def decode():
-    return jwt.decode(encode(),
-                      load_public_key(), algorithms=['RS256'])
-
-
-def load_private_key():
-    with open('keys/private_key.pem', 'rb') as pem_in:
-        pemlines_in = pem_in.read()
-    priv_key = load_pem_private_key(pemlines_in, None, default_backend())
-    return priv_key
-
-
-def load_public_key():
-    with open('keys/public_key.pem', 'rb') as pem_out:
-        pemlines_out = pem_out.read()
-    pub_key = load_pem_public_key(pemlines_out, default_backend())
-    return pub_key
 
 
 def source_count(source_data):
@@ -246,4 +197,4 @@ def generate_uid():
 
 
 if __name__ == '__main__':
-    extract(encode(), sys.argv[1])
+    extract(g1_jwt.jwt_encode(), sys.argv[1])

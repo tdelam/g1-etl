@@ -3,7 +3,7 @@ import logging
 import logging.handlers
 
 
-logging.basicConfig(filename="g1-etl-members.log", level=logging.INFO)
+logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-members")
 
 
@@ -47,3 +47,11 @@ def download_images(env, user_id, pic):
     if not total_size:
         log.error("--"
                   "Error: File {0} did not successfully download".format(pic))
+
+
+def chunks(data, size):
+    """
+    chunks big data so we can send the API data chunks
+    """
+    chunk = [data[i:i + size] for i in range(0, len(data), size)]
+    return chunk
