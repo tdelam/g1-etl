@@ -17,7 +17,7 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-
+from datetime import date, datetime
 from utilities import utils, g1_jwt
 
 logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
@@ -63,48 +63,75 @@ def transform_members(source_data, token, organization_id):
         'address', 'phone_number', 'dob', 'license_type', 'registry_no',
         'membership_id', 'given_caregivership', 'tax_exempt',
         'drivers_license_no', 'points', 'locked_visits',
-        'locked_visits_reason', 'caregiver_id', 'picture_file_name'
+        'locked_visits_reason', 'caregiver_id', 'picture_file_name',
+        'card_expires_at', 'created_at', 'updated_at', 'physician_id',
+        'custom_membership_id', 'organization_membership_id'
     ]
-    members = etl.cut(source_dt, cut_data)
+    member_data = etl.cut(source_dt, cut_data)
 
-    member_obj = {
-        "id": "id",
-        "uid": "uid",
-        "tax_exempt": "taxExempt",
-        "dispensary_id": "organizationId"
-    }
+    members = (
+        etl
+        .addfield(member_data, 'identificationType')
+        .addfield('createdAtEpoch')
+    )
 
-    member_conversions = {
-        "tax_exempt": bool,
-        "dob": str
-    }
+    member_mapping = OrderedDict()
 
-    members = etl.addfield(members, 'uid')
-    members_uid = etl.convert(members, 'uid', lambda _: generate_uid())
+    member_mapping['id'] = 'id'
+    member_mapping['caregiver_id'] = 'caregiver_id'
+    member_mapping['dispensary_id'] = 'dispensary_id'
+    member_mapping['physician_id'] = 'physician_id'
+    member_mapping['custom_membership_id'] = 'custom_membership_id'
+    member_mapping['organization_membership_id'] = 'organization_membership_id'
+    member_mapping['picture_file_name'] = 'picture_file_name'
+    member_mapping['organizationId'] = 'organization_id'
+    member_mapping['dateOfBirth'] = 'dob'
+    member_mapping['memberType'] = 'license_type'
+    member_mapping['mmjCard'] = 'registry_no'
+    member_mapping['membershipLevel'] = 'membership_id'
+    member_mapping['isCaregiver'] = 'given_caregivership'
+    member_mapping['identificationNumber'] = 'drivers_license_no'
+    member_mapping['points'] = 'points'
+    member_mapping['expiryDate'] = 'card_expires_at'
+    member_mapping['taxExempt'] = 'tax_exempt'
+    member_mapping['locked_visits'] = 'locked_visits'
+    member_mapping['locked_visits_reason'] = 'accountStatusNotes'
+    member_mapping['createdAt'] = 'created_at'
+    member_mapping['updatedAt'] = 'updated_at'
 
-    pictures = {}
-    pics = etl.values(members_uid, 'picture_file_name', 'id')
-    pics_dict = dict([(value, id) for (value, id) in pics])
-    for pic, user_id in pics_dict.iteritems():
-        if user_id and pic:
-            # Download images for user. ENV is development/production.
-            utils.download_images(ENV, user_id, pic)
-            pictures[user_id] = pic
-    # set picture for user id and map fields
-    member_mapping = OrderedDict(member_obj)
-    member_mapping["picture_file_name"] = "id", lambda image: pictures[image]
-    #member_mapping = mappings(pictures)
-    mapped_table = etl.fieldmap(members_uid, member_mapping)
+    
+    member_mapping['accountStatus'] = 'accountStatus', \
+        lambda x: print(x)
+
+    member_mapping['taxExempt'] = 'taxExempt', \
+        lambda x: True if x.taxExempt == 1 else False
+
+    member_fields = etl.fieldmap(members, member_mapping)
+
+    #merged_members = etl.merge(members, member_fields, key='id')
+    # pictures = {}
+    # pics = etl.values(members_uid, 'picture_file_name', 'id')
+    # pics_dict = dict([(value, id) for (value, id) in pics])
+
+    # for pic, user_id in pics_dict.iteritems():
+    #     if user_id and pic:
+    #         # Download images for user. ENV is development/production.
+    #         utils.download_images(ENV, user_id, pic)
+    #         pictures[user_id] = pic
+    # print(pictures)
+
+    # member_mapping["picture_file_name"] = "id", lambda image: pictures[image]
+    # mapped_table = etl.fieldmap(members_uid, member_mapping)
 
     # transform some fields and merge mapped tables
-    merged_data = etl.merge(members, mapped_table, key='id')
-    merged_data = etl.convert(merged_data, member_conversions)
+    # merged_data = etl.merge(members, mapped_table, key='id')
 
-    final_data = etl.rename(merged_data, member_obj)
+    # final_data = etl.rename(merged_data, member_obj)
 
     try:
-        etl.tojson(merged_data, 'g1-members-{0}.json'.format(organization_id),
-                   sort_keys=True, encoding="latin-1")
+        etl.tojson(member_fields, 'g1-members-{0}.json'
+                   .format(organization_id),
+                   sort_keys=True, encoding="latin-1", default=json_serial)
     except UnicodeDecodeError, e:
         log.warn("UnicodeDecodeError: ", e)
 
@@ -113,18 +140,37 @@ def transform_members(source_data, token, organization_id):
     
     members = []
     for item in parsed_members:
+        item['mmjKeys'] = {
+            'caregiver_id': item['caregiver_id'],
+            'dispensary_id': item['dispensary_id'],
+            'physician_id': item['physician_id'],
+            'custom_membership_id': item['custom_membership_id'],
+            'organization_membership_id': item['organization_membership_id'],
+            'picture_file_name': item['picture_file_name']
+        }
         # set up final structure for API
-        members.append(item)        
+        item['identificationType'] = 'Drivers License'
+        members.append(item)
+
+    #print(members)
 
     headers = {'Authorization': 'Bearer {0}'.format(token)}
     
     for item in utils.chunks(members, 5):
         if STATUS_CODE == 200:
             # Do something with chunked data
-            print(json.dumps(item))
+            pass
+            #print(json.dumps(item))
             # r = requests.post(URL, data=item, headers=headers)
         else:
             logging.warn('Chunk has failed: {0}'.format(item))
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def source_count(source_data):
@@ -149,7 +195,7 @@ def load_db_data(db, table_name, from_json=False):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0}".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} limit 1".format(table_name))
 
 
 def view_to_list(data):
@@ -160,15 +206,6 @@ def view_to_list(data):
 
     if type(data) is DictsView:
         return data
-
-
-def generate_uid():
-    """
-    Generates UID for G1
-    """
-    range_start = 10**(8 - 1)
-    range_end = (10**8) - 1
-    return randint(range_start, range_end)
 
 
 if __name__ == '__main__':

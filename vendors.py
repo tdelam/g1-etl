@@ -62,22 +62,14 @@ def transform_vendors(source_data, token, organization_id):
     vendor_data = etl.cut(source_dt, cut_data)
     vendors = (
         etl
-        .addfield(vendor_data, 'uid')
-        .addfield('organizationId')
-        .addfield('mmjIds')
-    )
-
-    address_data = etl.dicts(
-        etl.cut(vendors, 'city', 'zip_code', 'state', 'country')
+        .addfield(vendor_data, 'organizationId')
+        .addfield('mmKeys')
     )
 
     vendor_mappings = OrderedDict()
     vendor_mappings['id'] = 'id'
     vendor_mappings['dispensary_id'] = 'dispensary_id'
     vendor_mappings['address'] = 'address'
-
-    # generate uid
-    vendor_mappings['uid'] = lambda _: generate_uid()
 
     # field renames
     vendor_mappings['accountStatus'] = \
@@ -117,11 +109,11 @@ def transform_vendors(source_data, token, organization_id):
             'default': True
         }]
 
-        item['mmjIds'] = [{
+        item['mmjKeys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
             'mmjvenu_id': item['mmjvenu_id']
-        }]
+        }
 
         # mutate dict and remove fields that are mapped and no longer required
         del item['zip']
@@ -185,15 +177,6 @@ def view_to_list(data):
 
     if type(data) is DictsView:
         return data
-
-
-def generate_uid():
-    """
-    Generates UID for G1
-    """
-    range_start = 10**(8 - 1)
-    range_end = (10**8) - 1
-    return randint(range_start, range_end)
 
 
 if __name__ == '__main__':
