@@ -1,0 +1,87 @@
+[{
+  "organizationId" : "420",
+  "source": "mmjMenu",
+  "extractedDate": "2017-11-19T18:43:39", 
+  "members": [{  
+     "memberType":1,
+     "mmjCard":"",
+     "updatedAt":"2017-11-19T18:43:39",
+     "locked_visits":0,
+     "id":1,
+     "createdAt":"2017-11-16T14:44:58",
+     "taxExempt":null,
+     "membershipLevel":1,
+     "identificationNumber":"3424234",
+     "expiryDate":"2017-11-23T00:00:00",
+     "dateOfBirth":"1980-09-02T00:00:00",
+     "custom_membership_id":"2017111658659131850",
+     "isCaregiver":0,
+     "caregiver_id":null,
+     "mmjKeys":{  
+        "picture_file_name":"Factory-SNP51409420-600x600.jpg",
+        "dispensary_id":1,
+        "custom_membership_id":"2017111658659131850",
+        "organization_membership_id":null,
+        "physician_id":null,
+        "caregiver_id":null
+     },
+     "locked_visits_reason":null,
+     "accountStatus":null,
+     "identificationType":"Drivers License",
+     "points":0.0
+  }],
+  "vendors": [{  
+     "name":"John Doe",
+     "website":"http://www.doe.net",
+     "accountStatus":"ACTIVE",
+     "mmKeys":null,
+     "phone":[  
+        {  
+           "default":true,
+           "name":"business",
+           "number":"7059185695"
+        }
+     ],
+     "address":{  
+        "city":"Toronto",
+        "zip":"55812",
+        "country":null,
+        "line2":null,
+        "line1":"123 Red St.",
+        "state":"MN"
+     },
+     "licenceNumber":"45564643563",
+     "mmjKeys":{  
+        "mmjvenu_id":"",
+        "dispensary_id":1,
+        "id":2
+     },
+     "email":"john@doe.net"
+  }],
+  "products": [{  
+    "mmjKeys": {
+      "id":1,
+      "vendor_id": 4,
+      "menu_id":1,
+      "dispensary_id":1,
+      "strain_id":null
+    },
+    "createdAt" : "2017-12-04T16:07:15.258Z",
+    "createdAtEpoch" : 1512403635258,
+    "updatedAt" : "2017-12-04T16:07:15.258Z",
+    "name" : "Weed 1",
+    "categoryId" : "Indica",
+    "price" : 0,
+    "weightPricing" : {
+      "price_half_gram" : 0,
+      "price_gram" : 0,
+      "price_eighth" : 0,
+      "price_quarter" : 0,
+      "price_half" : 0,
+      "price_ounce" : 0
+    },
+    "pricingTier" : "Default",
+    "active" : true,
+    "unitOfMeasure" : 1    
+  }]
+}]

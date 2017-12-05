@@ -99,6 +99,7 @@ def transform_members(source_data, token, organization_id):
     member_mapping['createdAt'] = 'created_at'
     member_mapping['updatedAt'] = 'updated_at'
 
+    f = lambda x: print(x)
     
     member_mapping['accountStatus'] = 'accountStatus', \
         lambda x: print(x)
@@ -150,6 +151,7 @@ def transform_members(source_data, token, organization_id):
         }
         # set up final structure for API
         item['identificationType'] = 'Drivers License'
+        print(json.dumps(item))
         members.append(item)
 
     #print(members)
