@@ -75,7 +75,16 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     mappings['email'] = 'email'
     mappings['name'] = \
         lambda name: "{0} {1}".format(name.first_name, name.last_name)
-    mappings['role'] = lambda x: lookup_role[x.id][0]
+
+    """
+    Roles:
+        1 = site-admin
+        2 = site-admin
+        3 = store-manager
+        4 = budtender
+    """
+    mappings['role'] = lambda x: assign_role(lookup_role[x.id][0])
+
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organizationId'] = organization_id
@@ -94,6 +103,9 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         }
         del item['first_name']
         del item['last_name']
+        del item['created_at']
+        del item['id']
+        del item['organization_id']
         # set up final structure for API
         mapped_employees.append(item)
 
@@ -101,6 +113,15 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
                         indent=4, default=json_serial)
     print(result)
     return result
+
+
+def assign_role(id):
+    if id == 1 or id == 2:
+        return 'site-admin'
+    elif id == 3:
+        return 'store-manager'
+    else:
+        return 'budtender'
 
 
 def json_serial(obj):

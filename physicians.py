@@ -110,7 +110,6 @@ def transform(source_data, organization_id):
 
     result = json.dumps(physicians, sort_keys=True,
                         indent=4, default=json_serial)
-
     return result
 
 
