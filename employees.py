@@ -19,7 +19,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id):
+def extract(organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -32,14 +32,14 @@ def extract(organization_id):
     try:
         mmj_employees = utils.load_db_data(source_db, 'users')
         mmj_dispensary_users = utils.load_db_data(source_db, 'dispensary_users')
-
-        transform(mmj_employees, mmj_dispensary_users, organization_id)
+        return transform(mmj_employees, mmj_dispensary_users,
+                         organization_id, debug)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_employees, mmj_dispensary_users, organization_id):
+def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
     """
     Load the transformed data into the destination(s)
     """
@@ -105,10 +105,12 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         # set up final structure for API
         mapped_employees.append(item)
 
-    result = json.dumps(mapped_employees, sort_keys=True,
-                        indent=4, default=utils.json_serial)
-    #print(result)
-    return result
+    if debug:
+        result = json.dumps(mapped_employees, sort_keys=True,
+                            indent=4, default=utils.json_serial)
+        print(result)
+
+    return mapped_employees
 
 def assign_role(id):
     if id == 1 or id == 2:
@@ -120,4 +122,4 @@ def assign_role(id):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1])
+    extract(sys.argv[1], True)
