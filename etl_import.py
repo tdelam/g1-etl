@@ -25,7 +25,8 @@ def extract(organization_id):
         'vendors': vendors_extract,
         'physicians': physicians_extract
     }
-    result = json.dumps(payload, sort_keys=True, indent=4, default=utils.json_serial)
+    result = json.dumps(payload, sort_keys=True,
+                        indent=4, default=utils.json_serial)
     print(result)
 
     with open('mmj-{0}.json'.format(organization_id), 'w') as outfile:

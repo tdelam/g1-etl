@@ -145,6 +145,7 @@ def transform(source_data, organization_id):
 
     result = json.dumps(members, sort_keys=True,
                         indent=4, default=utils.json_serial)
+    #print(result)
     return result
 
 
