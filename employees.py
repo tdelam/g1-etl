@@ -7,9 +7,6 @@ import json
 import logging
 import logging.handlers
 
-from petl.io.db import DbView
-from petl.io.json import DictsView
-from petl.transform.basics import CutView
 from collections import OrderedDict
 from utilities import utils
 
@@ -33,8 +30,8 @@ def extract(organization_id):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        mmj_employees = load_db_data(source_db, 'users')
-        mmj_dispensary_users = load_db_data(source_db, 'dispensary_users')
+        mmj_employees = utils.load_db_data(source_db, 'users')
+        mmj_dispensary_users = utils.load_db_data(source_db, 'dispensary_users')
 
         transform(mmj_employees, mmj_dispensary_users, organization_id)
 
@@ -47,8 +44,8 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     Load the transformed data into the destination(s)
     """
     # source data table
-    source_dt = view_to_list(mmj_employees)
-    roles_dt = view_to_list(mmj_dispensary_users)
+    source_dt = utils.view_to_list(mmj_employees)
+    roles_dt = utils.view_to_list(mmj_dispensary_users)
 
     cut_data = ['id', 'email', 'first_name', 'organization_id',
                 'last_name', 'created_at', 'updated_at']
@@ -108,10 +105,10 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         # set up final structure for API
         mapped_employees.append(item)
 
-    result = json.dumps(mapped_employees, sort_keys=True, 
+    result = json.dumps(mapped_employees, sort_keys=True,
                         indent=4, default=utils.json_serial)
+    #print(result)
     return result
-
 
 def assign_role(id):
     if id == 1 or id == 2:
@@ -120,30 +117,6 @@ def assign_role(id):
         return 'store-manager'
     else:
         return 'budtender'
-
-
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
-
-
-def load_db_data(db, table_name):
-    """
-    Data extracted from source db
-    """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
-
-
-def view_to_list(data):
-    if type(data) is DbView or type(data) is CutView:
-        # convert the view to a lists of lists for petl
-        # map is quicker than list comp
-        return list(map(list, data))
-
-    if type(data) is DictsView:
-        return data
 
 
 if __name__ == '__main__':

@@ -3,10 +3,35 @@ import logging
 import logging.handlers
 from datetime import date, datetime
 
+import petl as etl
+from petl.io.db import DbView
+from petl.io.json import DictsView
+from petl.transform.basics import CutView
+from datetime import date, datetime
 
 logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-members")
 
+def load_db_data(db, table_name):
+    """
+    Data extracted from source db
+    """
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+
+def view_to_list(data):
+    if type(data) is DbView or type(data) is CutView:
+        # convert the view to a lists of lists for petl
+        # map is quicker than list comp
+        return list(map(list, data))
+
+    if type(data) is DictsView:
+        return data
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 def download_images(env, user_id, pic):
     """
