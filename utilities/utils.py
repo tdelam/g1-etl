@@ -1,6 +1,7 @@
 import urllib2
 import logging
 import logging.handlers
+from datetime import date, datetime
 
 import petl as etl
 from petl.io.db import DbView
@@ -80,3 +81,10 @@ def chunks(data, size):
     """
     chunk = [data[i:i + size] for i in range(0, len(data), size)]
     return chunk
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))

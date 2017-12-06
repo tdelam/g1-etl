@@ -9,7 +9,6 @@ import logging
 import logging.handlers
 
 from collections import OrderedDict
-from datetime import date, datetime
 from utilities import utils
 
 logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)

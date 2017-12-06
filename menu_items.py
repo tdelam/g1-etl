@@ -15,7 +15,6 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from datetime import date, datetime
 
 from pattern.text.en import singularize
 

@@ -109,7 +109,9 @@ def transform(source_data, organization_id):
         # set up final structure for API
         vendors.append(item)
 
-    result = json.dumps(vendors, sort_keys=True, indent=4, default=utils.json_serial)
+
+    result = json.dumps(vendors, sort_keys=True, indent=4,
+                        default=utils.json_serial)
     #print(result)
     return result
 

@@ -10,6 +10,7 @@ import logging.handlers
 from collections import OrderedDict
 from utilities import utils
 
+
 logging.basicConfig(filename="logs/g1-etl-employees.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-employees")
 
