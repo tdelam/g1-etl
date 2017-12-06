@@ -144,7 +144,6 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
 
     result = json.dumps(items, sort_keys=True, indent=4, 
                         default=utils.json_serial)
-    print(result)
     return result
 
 

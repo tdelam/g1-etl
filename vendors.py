@@ -53,7 +53,6 @@ def transform(source_data, organization_id):
     vendors = (
         etl
         .addfield(vendor_data, 'organizationId')
-        .addfield('mmKeys')
     )
 
     vendor_mappings = OrderedDict()
@@ -89,7 +88,7 @@ def transform(source_data, organization_id):
             'default': True
         }]
 
-        item['mmjKeys'] = {
+        item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
             'mmjvenu_id': item['mmjvenu_id']
@@ -114,7 +113,6 @@ def transform(source_data, organization_id):
 
     result = json.dumps(vendors, sort_keys=True, indent=4, 
                         default=utils.json_serial)
-
     return result
 
 
