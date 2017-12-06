@@ -157,11 +157,11 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
 
 
 def map_categories(category_id, data, menu_items):
-    cat = None
     try:
         category = data.keys()[data.values().index(category_id)]
         if category == 'Cannabis':
-            strain_data = etl.cut(menu_items, 'sativa', 'indica', 'category_id', 'id')
+            strain_data = etl.cut(menu_items, 'sativa', 
+                                 'indica', 'category_id', 'id')
             strain_vals = etl.dicts(strain_data)
             for strain in strain_vals.__iter__():
                 if strain['sativa'] > 0 or strain['indica'] > 0:
