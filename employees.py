@@ -11,7 +11,8 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from utilities import utils, g1_jwt
+from utilities import utils
+from datetime import date, datetime
 
 
 logging.basicConfig(filename="logs/g1-etl-employees.log", level=logging.INFO)
@@ -52,32 +53,33 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     cut_data = ['id', 'email', 'first_name', 
                 'last_name', 'created_at', 'updated_at']
     
-    cut_roles = ['id', 'access']
+    cut_dispensary_users = ['id', 'access', 'active']
 
     employee_data = etl.cut(source_dt, cut_data)
-    roles_data = etl.cut(roles_dt, cut_roles)
-    #print(type(roles_data))
-    #import pdb; pdb.set_trace()
+    roles_data = etl.cut(roles_dt, cut_dispensary_users)
+
     employees = (
         etl
         .addfield(employee_data, 'organizationId')
-        .addfield('mmKeys')
+        .addfield('keys')
+        .addfield('name')
         .addfield('role')
     )
 
     lookup_role = etl.lookup(roles_data, 'id', 'access')
+    lookup_active = etl.lookup(roles_data, 'id', 'active')
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
     mappings['email'] = 'email'
-    mappings['first_name'] = 'first_name'
-    mappings['last_name'] = 'last_name'
+    mappings['name'] = \
+        lambda name: "{0} {1}".format(name.first_name, name.last_name)
     mappings['role'] = lambda x: lookup_role[x.id][0]
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organizationId'] = organization_id
     mappings['accountStatus'] = \
-        lambda x: "ACTIVE" if x.confirmed == 1 else "INACTIVE"
+        lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"
 
     fields = etl.fieldmap(employees, mappings)
     merged_employees = etl.merge(employees, fields, key='id')
@@ -87,10 +89,20 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         item['keys'] = {
             'id': item['id']
         }
+        del item['first_name']
+        del item['last_name']
         # set up final structure for API
         mapped_employees.append(item)
 
-    print(mapped_employees)
+    print(json.dumps(mapped_employees, default=json_serial))
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
+
 
 def source_count(mmj_employees):
     """
