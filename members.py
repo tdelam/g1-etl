@@ -34,7 +34,7 @@ def extract(organization_id):
 
     try:
         source_data = load_db_data(source_db, 'customers')
-        transform(source_data, organization_id)
+        return transform(source_data, organization_id)
 
     finally:
         source_db.close()
@@ -108,7 +108,7 @@ def transform(source_data, organization_id):
         lambda x: True if x.taxExempt == 1 else False
 
     member_fields = etl.fieldmap(members, member_mapping)
-    
+
     members = []
     for item in etl.dicts(member_fields):
         item['keys'] = {
@@ -144,11 +144,13 @@ def transform(source_data, organization_id):
         del item['organization_id']
 
         members.append(item)
-    
-    with open('g1-members-{0}.json'.format(organization_id), 'w') as outfile:
-        json.dump(members, outfile, sort_keys=True, 
-                  indent=4, default=json_serial)
 
+    #with open('g1-members-{0}.json'.format(organization_id), 'w') as outfile:
+    #    json.dump(members, outfile, sort_keys=True,
+    #              indent=4, default=json_serial)
+    result = json.dumps(members, sort_keys=True, indent=4, default=json_serial)
+    #print(result)
+    return result
 
 
 def json_serial(obj):

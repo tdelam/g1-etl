@@ -76,7 +76,7 @@ def transform(source_data, organization_id):
     physician_mapping['organizationId'] = organization_id
 
     physician_fields = etl.fieldmap(physicians, physician_mapping)
-    
+
     physicians = []
     for item in etl.dicts(physician_fields):
         item['keys'] = {
@@ -108,10 +108,15 @@ def transform(source_data, organization_id):
         # del item['phone']
 
         physicians.append(item)
-    
-    with open('g1-physicians-{0}.json'.format(organization_id), 'w') as outfile:
-        json.dump(physicians, outfile, sort_keys=True, 
-                  indent=4, default=json_serial)
+
+
+    result = json.dumps(physicians, sort_keys=True, indent=4, default=json_serial)
+    #print(result)
+    return result
+
+    #with open('g1-physicians-{0}.json'.format(organization_id), 'w') as outfile:
+    #    json.dump(physicians, outfile, sort_keys=True,
+    #              indent=4, default=json_serial)
 
 
 def json_serial(obj):

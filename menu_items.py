@@ -51,7 +51,7 @@ def extract(organization_id):
         mmj_categories = load_db_data(source_db, 'categories')
         prices = load_db_data(source_db, 'menu_item_prices')
 
-        transform(mmj_menu_items, mmj_categories, 
+        return transform(mmj_menu_items, mmj_categories,
                              prices, organization_id)
 
     finally:
@@ -109,12 +109,11 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
     for item in etl.dicts(data):
         breakpoint_pricing = (
             etl
-            .select(prices_data, 
+            .select(prices_data,
                             lambda x: x.menu_item_id == item['menu_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
         )
-
 
         item['mmjKeys'] = {
             'dispensary_id': item['dispensary_id'],
@@ -124,7 +123,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
             'strain_id': item['strain_id'],
             'category_id': item['category_id']
         }
-        for price in etl.dicts(breakpoint_pricing):    
+        for price in etl.dicts(breakpoint_pricing):
             item['weightPricing'] = {
                'price_half_gram': price['price_half_gram'],
                'price_gram': price['price_gram'],
@@ -144,20 +143,25 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         # set up final structure for API
         items.append(item)
 
-    print(items)
-    try:
-        etl.tojson(items, 'g1-menuitems-{0}.json'
-                   .format(organization_id),
-                   sort_keys=True, encoding="latin-1", default=json_serial)
-    except UnicodeDecodeError, e:
-        log.warn("UnicodeDecodeError: ", e)
+
+    result = json.dumps(items, sort_keys=True, indent=4, default=json_serial)
+    #print(result)
+    return result
+
+    #print(items)
+    #try:
+    #    etl.tojson(items, 'g1-menuitems-{0}.json'
+    #               .format(organization_id),
+    #               sort_keys=True, encoding="latin-1", default=json_serial)
+    #except UnicodeDecodeError, e:
+    #    log.warn("UnicodeDecodeError: ", e)
 
 
 def map_categories(category_id, data, menu_items):
     try:
         category = data.keys()[data.values().index(category_id)]
         if category == 'Cannabis':
-            strain_data = etl.cut(menu_items, 'sativa', 
+            strain_data = etl.cut(menu_items, 'sativa',
                                  'indica', 'category_id', 'id')
             strain_vals = etl.dicts(strain_data)
             for strain in strain_vals.__iter__():
@@ -174,15 +178,14 @@ def map_categories(category_id, data, menu_items):
             return 'Tinctures'
         if category == 'Prerolled':
             return 'Preroll'
-        
+
         if category in PLURAL_CATEGORIES:
             return singularize(category)
         else:
             return category
     except ValueError:
         return 'Other'
-    
-    
+
 
 def lab_results(data):
     # Put lab results on their own as this will be its own collection later

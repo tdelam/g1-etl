@@ -33,7 +33,7 @@ URL = 'http://localhost:3004/api/mmjetl/load/vendors'
 STATUS_CODE = 200  # TODO: change to capture status code from API
 
 
-def extract(token, organization_id):
+def extract(organization_id):
     """
     Grab all data from source(s).
     """
@@ -44,19 +44,19 @@ def extract(token, organization_id):
 
     try:
         source_data = load_db_data(source_db, 'vendors')
-        transform_vendors(source_data, token, organization_id)
+        transform_vendors(source_data, organization_id)
 
     finally:
         source_db.close()
 
 
-def transform_vendors(source_data, token, organization_id):
+def transform_vendors(source_data, organization_id):
     """
     Load the transformed data into the destination(s)
     """
     # source data table
     source_dt = view_to_list(source_data)
-    cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number', 
+    cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number',
                 'email', 'country', 'state', 'city', 'address', 'zip_code',
                 'liscense_no', 'confirmed', 'website']
     vendor_data = etl.cut(source_dt, cut_data)
@@ -82,18 +82,18 @@ def transform_vendors(source_data, token, organization_id):
     vendors_fields = etl.fieldmap(vendors, vendor_mappings)
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
-    try:
-        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'
-                   .format(organization_id),
-                   sort_keys=True, encoding="latin-1")
-    except UnicodeDecodeError, e:
-        log.warn("UnicodeDecodeError: ", e)
+    #try:
+    #    etl.tojson(merged_vendors, 'g1-vendors-{0}.json'
+    #               .format(organization_id),
+    #               sort_keys=True, encoding="latin-1")
+    #except UnicodeDecodeError, e:
+    #    log.warn("UnicodeDecodeError: ", e)
 
-    json_items = open("g1-vendors-{0}.json".format(organization_id))
-    parsed_vendors = json.loads(json_items.read())
+    #json_items = open("g1-vendors-{0}.json".format(organization_id))
+    #parsed_vendors = json.loads(json_items.read())
 
     vendors = []
-    for item in parsed_vendors:
+    for item in merged_vendors:
         item['address'] = {
             'line1': item['address'],
             'line2': None,
@@ -132,17 +132,9 @@ def transform_vendors(source_data, token, organization_id):
         # set up final structure for API
         vendors.append(item)
 
-    headers = {'Authorization': 'Bearer {0}'.format(token)}
-
-    for item in utils.chunks(vendors, 5):
-        if STATUS_CODE == 200:
-            # Do something with chunked data
-            print(json.dumps(item))
-            # r = requests.post(URL, data=item, headers=headers)
-            #pass
-        else:
-            logging.warn('Chunk has failed: {0}'.format(item))
-
+    result = json.dumps(vendors, sort_keys=True, indent=4, default=json_serial)
+    #print(result)
+    return result
 
 def source_count(source_data):
     """
@@ -180,4 +172,4 @@ def view_to_list(data):
 
 
 if __name__ == '__main__':
-    extract(g1_jwt.jwt_encode(), sys.argv[1])
+    extract(sys.argv[1])
