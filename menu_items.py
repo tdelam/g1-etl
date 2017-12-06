@@ -37,7 +37,9 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
+                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
+                                ".amazonaws.com",
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
@@ -48,7 +50,7 @@ def extract(organization_id):
         prices = load_db_data(source_db, 'menu_item_prices')
 
         return transform(mmj_menu_items, mmj_categories,
-                             prices, organization_id)
+                         prices, organization_id)
 
     finally:
         source_db.close()
@@ -60,10 +62,9 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
     """
     # source data table
     source_dt = view_to_list(mmj_menu_items)
-    #print(mmj_menu_items.lookall())
-    cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id', 'strain_id',
-                     'created_at', 'updated_at', 'category_id', 'name',
-                     'sativa', 'indica', 'on_hold']
+    cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
+                     'strain_id', 'created_at', 'updated_at', 'category_id',
+                     'name', 'sativa', 'indica', 'on_hold']
 
     cut_prices = ['menu_item_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
@@ -105,8 +106,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
     for item in etl.dicts(data):
         breakpoint_pricing = (
             etl
-            .select(prices_data,
-                            lambda x: x.menu_item_id == item['menu_id'])
+            .select(prices_data, lambda x: x.menu_item_id == item['menu_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
         )
@@ -139,7 +139,6 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         # set up final structure for API
         items.append(item)
 
-
     result = json.dumps(items, sort_keys=True, indent=4, default=json_serial)
 
     return result
@@ -149,8 +148,8 @@ def map_categories(category_id, data, menu_items):
     try:
         category = data.keys()[data.values().index(category_id)]
         if category == 'Cannabis':
-            strain_data = etl.cut(menu_items, 'sativa',
-                                 'indica', 'category_id', 'id')
+            strain_data = etl.cut(menu_items, 'sativa', 'indica',
+                                              'category_id', 'id')
             strain_vals = etl.dicts(strain_data)
             for strain in strain_vals.__iter__():
                 if strain['sativa'] > 0 or strain['indica'] > 0:

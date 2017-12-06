@@ -27,7 +27,9 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
+                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
+                                ".amazonaws.com",
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
@@ -49,9 +51,9 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     source_dt = view_to_list(mmj_employees)
     roles_dt = view_to_list(mmj_dispensary_users)
 
-    cut_data = ['id', 'email', 'first_name', 
+    cut_data = ['id', 'email', 'first_name',
                 'last_name', 'created_at', 'updated_at']
-    
+
     cut_dispensary_users = ['id', 'access', 'active']
 
     employee_data = etl.cut(source_dt, cut_data)
@@ -82,7 +84,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
 
     fields = etl.fieldmap(employees, mappings)
     merged_employees = etl.merge(employees, fields, key='id')
-    
+
     mapped_employees = []
     for item in etl.dicts(merged_employees):
         item['keys'] = {
