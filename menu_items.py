@@ -135,6 +135,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         del item['id']
         del item['strain_id']
         del item['on_hold']
+        del item['menu_id']
         del item['sativa']
         del item['category_id']
         del item['updated_at']

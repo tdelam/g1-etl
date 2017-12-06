@@ -80,7 +80,6 @@ def transform(source_data, organization_id):
         lambda m: 'MEDICAL' if m.license_type == 1 else 'RECREATIONAL'
 
     member_mapping['mmjCard'] = 'registry_no'
-    member_mapping['membershipLevel'] = 'membership_id'
     member_mapping['isCaregiver'] = \
         lambda x: True if x.given_caregivership == 1 else False
     member_mapping['identificationNumber'] = 'drivers_license_no'
@@ -134,12 +133,14 @@ def transform(source_data, organization_id):
         del item['state']
         del item['dispensary_id']
         del item['id']
-        del item['menu_id']
         del item['physician_id']
         del item['caregiver_id']
         del item['custom_membership_id']
         del item['organization_membership_id']
         del item['organization_id']
+        del item['picture_file_name']
+        del item['locked_visits_reason']
+        del item['locked_visits']
 
         members.append(item)
 

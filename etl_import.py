@@ -1,5 +1,6 @@
 from utilities import utils
 import sys
+import json
 
 import employees
 import members
@@ -24,8 +25,8 @@ def extract(organization_id):
         'vendors': vendors_extract,
         'employees': employees_extract
     }
-    result = json.dumps(payload, sort_keys=True, indent=4, default=json_serial)
-    #print(result)
+    result = json.dumps(payload, sort_keys=True, indent=4, default=utils.json_serial)
+    print(result)
 
     with open('mmj-{0}.json'.format(organization_id), 'w') as outfile:
         json.dump(result, outfile, sort_keys=True,
