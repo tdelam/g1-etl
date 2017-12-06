@@ -137,7 +137,6 @@ def transform(source_data, organization_id):
         del item['state']
         del item['dispensary_id']
         del item['id']
-        del item['menu_id']
         del item['physician_id']
         del item['caregiver_id']
         del item['custom_membership_id']
