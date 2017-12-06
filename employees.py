@@ -7,9 +7,6 @@ import json
 import logging
 import logging.handlers
 
-from petl.io.db import DbView
-from petl.io.json import DictsView
-from petl.transform.basics import CutView
 from collections import OrderedDict
 from utilities import utils
 from datetime import date, datetime
@@ -27,13 +24,15 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
+                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
+                                ".amazonaws.com",
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        mmj_employees = load_db_data(source_db, 'users')
-        mmj_dispensary_users = load_db_data(source_db, 'dispensary_users')
+        mmj_employees = utils.load_db_data(source_db, 'users')
+        mmj_dispensary_users = utils.load_db_data(source_db, 'dispensary_users')
 
         transform(mmj_employees, mmj_dispensary_users, organization_id)
 
@@ -46,10 +45,10 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     Load the transformed data into the destination(s)
     """
     # source data table
-    source_dt = view_to_list(mmj_employees)
-    roles_dt = view_to_list(mmj_dispensary_users)
+    source_dt = utils.view_to_list(mmj_employees)
+    roles_dt = utils.view_to_list(mmj_dispensary_users)
 
-    cut_data = ['id', 'email', 'first_name',
+    cut_data = ['id', 'email', 'first_name', 'organization_id',
                 'last_name', 'created_at', 'updated_at']
 
     cut_dispensary_users = ['id', 'access', 'active']
@@ -77,6 +76,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organizationId'] = organization_id
+    mappings['organization_id'] = 'organization_id' #  keep mmj org
     mappings['accountStatus'] = \
         lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"
 
@@ -86,33 +86,18 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     mapped_employees = []
     for item in etl.dicts(merged_employees):
         item['keys'] = {
-            'id': item['id']
+            'id': item['id'],
+            'organization_id': item['organization_id']
         }
         del item['first_name']
         del item['last_name']
         # set up final structure for API
         mapped_employees.append(item)
 
-    result = json.dumps(mapped_employees, default=utils.json_serial)
+    result = json.dumps(mapped_employees, sort_keys=True,
+                        indent=4, default=utils.json_serial)
     #print(result)
     return result
-
-
-def load_db_data(db, table_name):
-    """
-    Data extracted from source db
-    """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
-
-
-def view_to_list(data):
-    if type(data) is DbView or type(data) is CutView:
-        # convert the view to a lists of lists for petl
-        # map is quicker than list comp
-        return list(map(list, data))
-
-    if type(data) is DictsView:
-        return data
 
 
 if __name__ == '__main__':

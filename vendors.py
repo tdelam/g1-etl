@@ -8,9 +8,6 @@ import json
 import logging
 import logging.handlers
 
-from petl.io.db import DbView
-from petl.io.json import DictsView
-from petl.transform.basics import CutView
 from collections import OrderedDict
 from utilities import utils
 
@@ -27,12 +24,14 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
+                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
+                                ".amazonaws.com",
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        source_data = load_db_data(source_db, 'vendors')
+        source_data = utils.load_db_data(source_db, 'vendors')
         transform(source_data, organization_id)
     finally:
         source_db.close()
@@ -43,7 +42,7 @@ def transform(source_data, organization_id):
     Load the transformed data into the destination(s)
     """
     # source data table
-    source_dt = view_to_list(source_data)
+    source_dt = utils.view_to_list(source_data)
     cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number',
                 'email', 'country', 'state', 'city', 'address', 'zip_code',
                 'liscense_no', 'confirmed', 'website']
@@ -113,22 +112,6 @@ def transform(source_data, organization_id):
     result = json.dumps(vendors, sort_keys=True, indent=4, default=utils.json_serial)
     #print(result)
     return result
-
-
-def load_db_data(db, table_name):
-    """
-    Data extracted from source db
-    """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
-
-def view_to_list(data):
-    if type(data) is DbView or type(data) is CutView:
-        # convert the view to a lists of lists for petl
-        # map is quicker than list comp
-        return list(map(list, data))
-
-    if type(data) is DictsView:
-        return data
 
 
 if __name__ == '__main__':
