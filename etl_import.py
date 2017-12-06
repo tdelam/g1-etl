@@ -1,9 +1,17 @@
+import sys
+import json
 from utilities import utils
 import employees
 import members
 import menu_items
 import vendors
 import physicians
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 def extract(organization_id):
     employees_extract = employees.extract(organization_id)
