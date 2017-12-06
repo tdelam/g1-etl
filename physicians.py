@@ -27,11 +27,10 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
-
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
     try:
         source_data = load_db_data(source_db, 'physicians')
         transform(source_data, organization_id)
@@ -76,7 +75,7 @@ def transform(source_data, organization_id):
     physician_mapping['organizationId'] = organization_id
 
     physician_fields = etl.fieldmap(physicians, physician_mapping)
-    
+
     physicians = []
     for item in etl.dicts(physician_fields):
         item['keys'] = {
@@ -98,20 +97,20 @@ def transform(source_data, organization_id):
             'default': True
         }]
 
-        # del item['address']
         del item['city']
         del item['zip_code']
         del item['state']
         del item['country']
         del item['dispensary_id']
         del item['id']
-        # del item['phone']
 
         physicians.append(item)
-    
-    with open('g1-physicians-{0}.json'.format(organization_id), 'w') as outfile:
-        json.dump(physicians, outfile, sort_keys=True, 
-                  indent=4, default=json_serial)
+
+
+    result = json.dumps(physicians, sort_keys=True, 
+                        indent=4, default=json_serial)
+
+    return result
 
 
 def json_serial(obj):

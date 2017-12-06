@@ -31,11 +31,9 @@ def extract(organization_id):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-
     try:
         source_data = load_db_data(source_db, 'vendors')
         transform(source_data, organization_id)
-
     finally:
         source_db.close()
 
@@ -46,7 +44,7 @@ def transform(source_data, organization_id):
     """
     # source data table
     source_dt = view_to_list(source_data)
-    cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number', 
+    cut_data = ['id', 'dispensary_id', 'mmjvenu_id', 'name', 'phone_number',
                 'email', 'country', 'state', 'city', 'address', 'zip_code',
                 'liscense_no', 'confirmed', 'website']
     vendor_data = etl.cut(source_dt, cut_data)
@@ -112,9 +110,9 @@ def transform(source_data, organization_id):
         # set up final structure for API
         vendors.append(item)
 
-    with open('g1-vendors-{0}.json'.format(organization_id), 'w') as outfile:
-        json.dump(vendors, outfile, sort_keys=True, 
-                  indent=4, default=json_serial)
+    result = json.dumps(vendors, sort_keys=True, indent=4, default=json_serial)
+
+    return result
 
 
 def load_db_data(db, table_name):
