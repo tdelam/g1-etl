@@ -51,7 +51,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     source_dt = view_to_list(mmj_employees)
     roles_dt = view_to_list(mmj_dispensary_users)
 
-    cut_data = ['id', 'email', 'first_name',
+    cut_data = ['id', 'email', 'first_name', 'organization_id',
                 'last_name', 'created_at', 'updated_at']
 
     cut_dispensary_users = ['id', 'access', 'active']
@@ -79,6 +79,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organizationId'] = organization_id
+    mappings['organization_id'] = 'organization_id' #  keep mmj org
     mappings['accountStatus'] = \
         lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"
 
@@ -88,14 +89,18 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     mapped_employees = []
     for item in etl.dicts(merged_employees):
         item['keys'] = {
-            'id': item['id']
+            'id': item['id'],
+            'organization_id': item['organization_id']
         }
         del item['first_name']
         del item['last_name']
         # set up final structure for API
         mapped_employees.append(item)
 
-    print(json.dumps(mapped_employees, default=json_serial))
+    result = json.dumps(mapped_employees, sort_keys=True, 
+                        indent=4, default=json_serial)
+    print(result)
+    return result
 
 
 def json_serial(obj):

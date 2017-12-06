@@ -97,7 +97,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
     mappings['organizationId'] = organization_id
     mappings['categoryId'] = \
         lambda x: map_categories(x.category_id, mmj_categories, menu_items)
-    mappings['active'] = lambda x: True if x.on_hold == 0 else False
+    mappings['active'] = lambda x: True if x.on_hold == 1 else False
 
     fields = etl.fieldmap(menu_items, mappings)
     data = etl.merge(menu_items, fields, key='id')
@@ -134,13 +134,14 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         del item['dispensary_id']
         del item['id']
         del item['strain_id']
+        del item['on_hold']
         del item['sativa']
         del item['category_id']
         # set up final structure for API
         items.append(item)
 
     result = json.dumps(items, sort_keys=True, indent=4, default=json_serial)
-
+    print(result)
     return result
 
 
@@ -205,4 +206,4 @@ def view_to_list(data):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[2])
+    extract(sys.argv[1])
