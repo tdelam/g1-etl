@@ -13,7 +13,7 @@ from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
 from datetime import date, datetime
-from utilities import utils, g1_jwt
+from utilities import utils
 
 logging.basicConfig(filename="logs/g1-etl-physicians.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-physicians")
@@ -110,20 +110,13 @@ def transform(source_data, organization_id):
         physicians.append(item)
 
 
-    result = json.dumps(physicians, sort_keys=True, indent=4, default=json_serial)
+    result = json.dumps(physicians, sort_keys=True, indent=4, default=utils.json_serial)
     #print(result)
     return result
 
     #with open('g1-physicians-{0}.json'.format(organization_id), 'w') as outfile:
     #    json.dump(physicians, outfile, sort_keys=True,
     #              indent=4, default=json_serial)
-
-
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def load_db_data(db, table_name, from_json=False):

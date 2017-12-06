@@ -144,7 +144,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         items.append(item)
 
 
-    result = json.dumps(items, sort_keys=True, indent=4, default=json_serial)
+    result = json.dumps(items, sort_keys=True, indent=4, default=utils.json_serial)
     #print(result)
     return result
 
@@ -191,13 +191,6 @@ def lab_results(data):
     # Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(data, *range(11, 16))
     return lab_results
-
-
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def load_db_data(db, table_name):

@@ -18,7 +18,7 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from utilities import utils, g1_jwt
+from utilities import utils
 
 
 logging.basicConfig(filename="logs/g1-etl-vendors.log", level=logging.INFO)
@@ -132,7 +132,7 @@ def transform_vendors(source_data, organization_id):
         # set up final structure for API
         vendors.append(item)
 
-    result = json.dumps(vendors, sort_keys=True, indent=4, default=json_serial)
+    result = json.dumps(vendors, sort_keys=True, indent=4, default=utils.json_serial)
     #print(result)
     return result
 

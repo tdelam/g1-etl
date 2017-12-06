@@ -23,8 +23,11 @@ def extract(organization_id):
         'employees': employees_extract
     }
     result = json.dumps(payload, sort_keys=True, indent=4, default=json_serial)
-    print(result)
+    #print(result)
 
+    with open('mmj-{0}.json'.format(organization_id), 'w') as outfile:
+        json.dump(result, outfile, sort_keys=True,
+                  indent=4, default=utils.json_serial)
 
 if __name__ == '__main__':
     extract(sys.argv[1])

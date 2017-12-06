@@ -6,6 +6,11 @@ import logging.handlers
 logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-members")
 
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 def download_images(env, user_id, pic):
     """
