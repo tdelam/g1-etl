@@ -34,13 +34,13 @@ def extract(organization_id):
 
     try:
         source_data = load_db_data(source_db, 'customers')
-        transform_members(source_data, organization_id)
+        transform(source_data, organization_id)
 
     finally:
         source_db.close()
 
 
-def transform_members(source_data, organization_id):
+def transform(source_data, organization_id):
     """
     Load the transformed data into the destination(s)
     """
@@ -156,24 +156,6 @@ def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-def source_count(source_data):
-    """
-    Count the number of records from source(s)
-    """
-    if source_data is not None:
-        return etl.nrows(source_data)
-    return None
-
-
-def destination_count(dest_data):
-    """
-    Same as source_count but with destination(s)
-    """
-    if dest_data is not None:
-        return etl.nrows(dest_data)
-    return None
 
 
 def load_db_data(db, table_name, from_json=False):

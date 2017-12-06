@@ -4,7 +4,6 @@ import MySQLdb
 import sys
 import pymongo
 import petl as etl
-import uuid
 import json
 import logging
 import logging.handlers
@@ -32,8 +31,6 @@ PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
 logging.basicConfig(filename="logs/g1-etl-menuitems.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-menuitems")
-
-ENV = 'development'
 
 
 def extract(organization_id):
@@ -198,24 +195,6 @@ def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
-
-
-def source_count(mmj_menu_items):
-    """
-    Count the number of records from source(s)
-    """
-    if mmj_menu_items is not None:
-        return etl.nrows(mmj_menu_items)
-    return None
-
-
-def destination_count(dest_data):
-    """
-    Same as source_count but with destination(s)
-    """
-    if dest_data is not None:
-        return etl.nrows(dest_data)
-    return None
 
 
 def load_db_data(db, table_name):

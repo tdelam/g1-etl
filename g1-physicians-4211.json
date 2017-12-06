@@ -1,0 +1,83 @@
+[
+    {
+        "address": {
+            "city": "Sudbury", 
+            "country": null, 
+            "line1": "268 Albinson Street", 
+            "state": "ON", 
+            "zip": "P3C 3W3"
+        }, 
+        "createdAt": "2017-12-06T17:11:42", 
+        "email": "tdelam@gmail.com", 
+        "keys": {
+            "dispensary_id": 1, 
+            "id": 1
+        }, 
+        "licenceNumber": "9043q9843984389", 
+        "name": "Trevor Delamorandiere", 
+        "organizationId": 4211, 
+        "phone": [
+            {
+                "default": true, 
+                "name": "work", 
+                "number": "7059185695"
+            }
+        ], 
+        "updatedAt": "2017-12-06T17:11:42", 
+        "verificationWebsite": "http://www.google.com"
+    }, 
+    {
+        "address": {
+            "city": "Toronto", 
+            "country": null, 
+            "line1": "123 Red St.", 
+            "state": "MN", 
+            "zip": "55812"
+        }, 
+        "createdAt": "2017-12-06T17:12:14", 
+        "email": "john@doe.net", 
+        "keys": {
+            "dispensary_id": 1, 
+            "id": 2
+        }, 
+        "licenceNumber": "43545657658657", 
+        "name": "John Doe", 
+        "organizationId": 4211, 
+        "phone": [
+            {
+                "default": true, 
+                "name": "work", 
+                "number": "7059185695"
+            }
+        ], 
+        "updatedAt": "2017-12-06T17:12:14", 
+        "verificationWebsite": "http://www.growone.com"
+    }, 
+    {
+        "address": {
+            "city": "Toronto", 
+            "country": null, 
+            "line1": "123 Red St.", 
+            "state": "MN", 
+            "zip": "55812"
+        }, 
+        "createdAt": "2017-12-06T17:12:45", 
+        "email": "john@doe.net", 
+        "keys": {
+            "dispensary_id": 1, 
+            "id": 3
+        }, 
+        "licenceNumber": "768987967", 
+        "name": "Jane Nome", 
+        "organizationId": 4211, 
+        "phone": [
+            {
+                "default": true, 
+                "name": "work", 
+                "number": "7059185695"
+            }
+        ], 
+        "updatedAt": "2017-12-06T17:12:45", 
+        "verificationWebsite": ""
+    }
+]
