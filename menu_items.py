@@ -77,7 +77,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         etl
         .addfield(menu_items, 'organizationId')
         .addfield('createdAtEpoch')
-        .addfield('mmjKeys')
+        .addfield('keys')
     )
 
     # Two-step transform and cut. First we need to cut the name
@@ -111,7 +111,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
             .cutout('menu_item_id')
         )
 
-        item['mmjKeys'] = {
+        item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
             'menu_id': item['menu_id'],
@@ -137,6 +137,8 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         del item['on_hold']
         del item['sativa']
         del item['category_id']
+        del item['updated_at']
+        del item['created_at']
         # set up final structure for API
         items.append(item)
 
