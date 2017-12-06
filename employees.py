@@ -110,7 +110,6 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
 
     result = json.dumps(mapped_employees, sort_keys=True, 
                         indent=4, default=utils.json_serial)
-    print(result)
     return result
 
 
