@@ -12,7 +12,6 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from datetime import date, datetime
 from utilities import utils, g1_jwt
 
 logging.basicConfig(filename="logs/g1-etl-physicians.log", level=logging.INFO)
@@ -109,7 +108,7 @@ def transform(source_data, organization_id):
         physicians.append(item)
 
     result = json.dumps(physicians, sort_keys=True,
-                        indent=4, default=json_serial)
+                        indent=4, default=utils.json_serial)
     return result
 
 

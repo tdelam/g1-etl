@@ -1,6 +1,7 @@
 import urllib2
 import logging
 import logging.handlers
+from datetime import date, datetime
 
 
 logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
@@ -55,3 +56,10 @@ def chunks(data, size):
     """
     chunk = [data[i:i + size] for i in range(0, len(data), size)]
     return chunk
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))

@@ -12,7 +12,6 @@ from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
 from utilities import utils
-from datetime import date, datetime
 
 
 logging.basicConfig(filename="logs/g1-etl-employees.log", level=logging.INFO)
@@ -110,7 +109,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         mapped_employees.append(item)
 
     result = json.dumps(mapped_employees, sort_keys=True, 
-                        indent=4, default=json_serial)
+                        indent=4, default=utils.json_serial)
     print(result)
     return result
 

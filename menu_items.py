@@ -15,7 +15,6 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from datetime import date, datetime
 
 from pattern.text.en import singularize
 
@@ -143,7 +142,8 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         # set up final structure for API
         items.append(item)
 
-    result = json.dumps(items, sort_keys=True, indent=4, default=json_serial)
+    result = json.dumps(items, sort_keys=True, indent=4, 
+                        default=utils.json_serial)
     print(result)
     return result
 
