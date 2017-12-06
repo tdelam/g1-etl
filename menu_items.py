@@ -41,10 +41,6 @@ def extract(organization_id):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-    # source_db = MySQLdb.connect(host="localhost",
-    #                             user="root",
-    #                             passwd="c0l3m4N",
-    #                             db="mmjmenu_development")
 
     try:
         mmj_menu_items = load_db_data(source_db, 'menu_items')
@@ -143,19 +139,10 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         # set up final structure for API
         items.append(item)
 
-
-    result = json.dumps(items, sort_keys=True, indent=4, default=utils.json_serial)
+    result = json.dumps(items, sort_keys=True,
+                        indent=4, default=utils.json_serial)
     #print(result)
     return result
-
-    #print(items)
-    #try:
-    #    etl.tojson(items, 'g1-menuitems-{0}.json'
-    #               .format(organization_id),
-    #               sort_keys=True, encoding="latin-1", default=json_serial)
-    #except UnicodeDecodeError, e:
-    #    log.warn("UnicodeDecodeError: ", e)
-
 
 def map_categories(category_id, data, menu_items):
     try:
@@ -197,7 +184,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 5".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
 
 
 def view_to_list(data):

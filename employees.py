@@ -27,11 +27,10 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
-
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
     try:
         mmj_employees = load_db_data(source_db, 'users')
         mmj_dispensary_users = load_db_data(source_db, 'dispensary_users')
@@ -50,9 +49,9 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
     source_dt = view_to_list(mmj_employees)
     roles_dt = view_to_list(mmj_dispensary_users)
 
-    cut_data = ['id', 'email', 'first_name', 
+    cut_data = ['id', 'email', 'first_name',
                 'last_name', 'created_at', 'updated_at']
-    
+
     cut_dispensary_users = ['id', 'access', 'active']
 
     employee_data = etl.cut(source_dt, cut_data)
@@ -83,7 +82,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
 
     fields = etl.fieldmap(employees, mappings)
     merged_employees = etl.merge(employees, fields, key='id')
-    
+
     mapped_employees = []
     for item in etl.dicts(merged_employees):
         item['keys'] = {
@@ -94,14 +93,9 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id):
         # set up final structure for API
         mapped_employees.append(item)
 
-    print(json.dumps(mapped_employees, default=json_serial))
-
-
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
+    result = json.dumps(mapped_employees, default=utils.json_serial)
+    #print(result)
+    return result
 
 
 def load_db_data(db, table_name):
