@@ -41,10 +41,6 @@ def extract(organization_id):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-    # source_db = MySQLdb.connect(host="localhost",
-    #                             user="root",
-    #                             passwd="c0l3m4N",
-    #                             db="mmjmenu_development")
 
     try:
         mmj_menu_items = load_db_data(source_db, 'menu_items')
@@ -201,7 +197,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 5".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
 
 
 def view_to_list(data):

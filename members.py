@@ -150,7 +150,6 @@ def transform(source_data, organization_id):
                   indent=4, default=json_serial)
 
 
-
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):

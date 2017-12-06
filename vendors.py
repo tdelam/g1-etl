@@ -1,14 +1,8 @@
 from __future__ import division, print_function, absolute_import
 
-from random import randint
-
-#import jwt
 import sys
 import MySQLdb
 import pymongo
-import requests
-import random
-import uuid
 import petl as etl
 import json
 import logging
@@ -18,7 +12,7 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from collections import OrderedDict
-from utilities import utils, g1_jwt
+from utilities import utils
 
 
 logging.basicConfig(filename="logs/g1-etl-vendors.log", level=logging.INFO)
@@ -28,29 +22,25 @@ log = logging.getLogger("g1-etl-vendors")
 reload(sys)
 sys.setdefaultencoding('latin-1')
 
-URL = 'http://localhost:3004/api/mmjetl/load/vendors'
-# Defaults to be changed when we have this information
-STATUS_CODE = 200  # TODO: change to capture status code from API
 
-
-def extract(token, organization_id):
+def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-101717-cluster.cluster-cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
 
     try:
         source_data = load_db_data(source_db, 'vendors')
-        transform_vendors(source_data, token, organization_id)
+        transform(source_data, organization_id)
 
     finally:
         source_db.close()
 
 
-def transform_vendors(source_data, token, organization_id):
+def transform(source_data, organization_id):
     """
     Load the transformed data into the destination(s)
     """
@@ -82,18 +72,8 @@ def transform_vendors(source_data, token, organization_id):
     vendors_fields = etl.fieldmap(vendors, vendor_mappings)
     merged_vendors = etl.merge(vendors, vendors_fields, key='id')
 
-    try:
-        etl.tojson(merged_vendors, 'g1-vendors-{0}.json'
-                   .format(organization_id),
-                   sort_keys=True, encoding="latin-1")
-    except UnicodeDecodeError, e:
-        log.warn("UnicodeDecodeError: ", e)
-
-    json_items = open("g1-vendors-{0}.json".format(organization_id))
-    parsed_vendors = json.loads(json_items.read())
-
     vendors = []
-    for item in parsed_vendors:
+    for item in etl.dicts(merged_vendors):
         item['address'] = {
             'line1': item['address'],
             'line2': None,
@@ -132,34 +112,9 @@ def transform_vendors(source_data, token, organization_id):
         # set up final structure for API
         vendors.append(item)
 
-    headers = {'Authorization': 'Bearer {0}'.format(token)}
-
-    for item in utils.chunks(vendors, 5):
-        if STATUS_CODE == 200:
-            # Do something with chunked data
-            print(json.dumps(item))
-            # r = requests.post(URL, data=item, headers=headers)
-            #pass
-        else:
-            logging.warn('Chunk has failed: {0}'.format(item))
-
-
-def source_count(source_data):
-    """
-    Count the number of records from source(s)
-    """
-    if source_data is not None:
-        return etl.nrows(source_data)
-    return None
-
-
-def destination_count(dest_data):
-    """
-    Same as source_count but with destination(s)
-    """
-    if dest_data is not None:
-        return etl.nrows(dest_data)
-    return None
+    with open('g1-vendors-{0}.json'.format(organization_id), 'w') as outfile:
+        json.dump(vendors, outfile, sort_keys=True, 
+                  indent=4, default=json_serial)
 
 
 def load_db_data(db, table_name):
@@ -167,6 +122,13 @@ def load_db_data(db, table_name):
     Data extracted from source db
     """
     return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))
 
 
 def view_to_list(data):
@@ -180,4 +142,4 @@ def view_to_list(data):
 
 
 if __name__ == '__main__':
-    extract(g1_jwt.jwt_encode(), sys.argv[1])
+    extract(sys.argv[1])
