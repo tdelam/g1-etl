@@ -61,5 +61,8 @@ def extract(organization_id):
     with open('mmj-{0}.json'.format(organization_id), 'w') as outfile:
         outfile.write(result)
 
+    #connect to the POS db and insert the tranformed payload
+    utils.mongo_connect_and_insert(payload)
+
 if __name__ == '__main__':
     extract(sys.argv[1])
