@@ -32,7 +32,7 @@ logging.basicConfig(filename="logs/g1-etl-menuitems.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-menuitems")
 
 
-def extract(organization_id):
+def extract(organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -47,13 +47,13 @@ def extract(organization_id):
         prices = load_db_data(source_db, 'menu_item_prices')
 
         return transform(mmj_menu_items, mmj_categories,
-                         prices, organization_id)
+                         prices, organization_id, debug)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_menu_items, mmj_categories, prices, organization_id):
+def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     """
     Transform data
     """
@@ -153,10 +153,12 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
         # set up final structure for API
         items.append(item)
 
-    result = json.dumps(items, sort_keys=True,
-                        indent=4, default=utils.json_serial)
-    #print(result)
-    return result
+    if debug:
+        result = json.dumps(items, sort_keys=True,
+                            indent=4, default=utils.json_serial)
+        print(result)
+
+    return items
 
 
 def map_uom(category_id, data):
@@ -219,4 +221,4 @@ def view_to_list(data):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1])
+    extract(sys.argv[1], True)

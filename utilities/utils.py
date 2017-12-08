@@ -3,6 +3,8 @@ import logging
 import logging.handlers
 from datetime import date, datetime
 
+from pymongo import MongoClient
+
 import petl as etl
 from petl.io.db import DbView
 from petl.io.json import DictsView
@@ -88,3 +90,8 @@ def json_serial(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
+
+def mongo_connect_and_insert(payload):
+    db = MongoClient('mongodb://localhost:3005/')
+    imports = db.meteor.etl.imports
+    imports.insert_one(payload)

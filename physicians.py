@@ -19,7 +19,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id):
+def extract(organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -31,13 +31,13 @@ def extract(organization_id):
                                 db="mmjmenu_production")
     try:
         source_data = utils.load_db_data(source_db, 'physicians')
-        transform(source_data, organization_id)
+        return transform(source_data, organization_id, debug)
 
     finally:
         source_db.close()
 
 
-def transform(source_data, organization_id):
+def transform(source_data, organization_id, debug):
     """
     Load the transformed data into the destination(s)
     """
@@ -104,11 +104,13 @@ def transform(source_data, organization_id):
 
         physicians.append(item)
 
-    result = json.dumps(physicians, sort_keys=True,
-                        indent=4, default=utils.json_serial)
-    #print(result)
-    return result
+    if debug:
+        result = json.dumps(physicians, sort_keys=True,
+                            indent=4, default=utils.json_serial)
+        print(result)
+
+    return physicians
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1])
+    extract(sys.argv[1], True)
