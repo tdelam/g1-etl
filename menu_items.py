@@ -84,12 +84,10 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     # and id from the source data to map to.
     cut_source_cats = etl.cut(mmj_categories, 'name', 'id', 'measurement')
     source_values = etl.values(cut_source_cats, 'name', 'id')
-    mmj_uom = etl.values(cut_source_cats, 'measurement', 'id')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
     mmj_categories = dict([(value, id) for (value, id) in source_values])
-    mmj_uom_dicts = dict([(value, id) for (value, id) in mmj_uom])
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
@@ -102,7 +100,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     2 = Grams (weight)
     """
     mappings['unitOfMeasure'] = \
-        lambda x: map_uom(x.category_id, mmj_uom_dicts)
+        lambda x: map_uom(x.category_id, cut_source_cats)
 
     mappings['organizationId'] = organization_id
     mappings['categoryId'] = \
@@ -161,10 +159,20 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     return items
 
 
-def map_uom(category_id, data):
-    category = data.keys()[data.values().index(category_id)]
-    print(category)
-    print(category_id)
+def map_uom(category_id, categories):
+    """
+    Maps the UOM.
+        This is going to look backwards but it's because on G1 the enum for
+        UOM is:
+            GRAM: 1
+            EACH: 2
+        but MMJ uses:
+            UNITS: 1
+            GRAM: 2
+    """
+    measurement = etl.selecteq(categories, 'id', category_id)
+    for measure in etl.dicts(measurement):
+        return 2 if measure['measurement'] == 1 else 1
 
 
 def map_categories(category_id, data, menu_items):
