@@ -1,7 +1,7 @@
 from __future__ import division, print_function, absolute_import
 
-import MySQLdb
 import os,sys,inspect
+import MySQLdb
 import petl as etl
 import json
 
@@ -29,15 +29,17 @@ def extract(organization_id, debug):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
+                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
+                                ".amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
 
     try:
-        mmj_menu_items = load_db_data(source_db, 'menu_items')
-        mmj_categories = load_db_data(source_db, 'categories')
-        prices = load_db_data(source_db, 'menu_item_prices')
+        mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
+        mmj_categories = utils.load_db_data(source_db, 'categories')
+        prices = utils.load_db_data(source_db, 'menu_item_prices')
 
         return transform(mmj_menu_items, mmj_categories,
                          prices, organization_id, debug)
@@ -51,7 +53,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     Transform data
     """
     # source data table
-    source_dt = view_to_list(mmj_menu_items)
+    source_dt = utils.view_to_list(mmj_menu_items)
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
                      'name', 'sativa', 'indica', 'on_hold']

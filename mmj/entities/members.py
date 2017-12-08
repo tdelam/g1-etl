@@ -12,7 +12,6 @@ sys.path.insert(0,parentdir)
 from collections import OrderedDict
 from utilities import utils
 
-
 # handle characters outside of ascii
 reload(sys)
 sys.setdefaultencoding('latin-1')

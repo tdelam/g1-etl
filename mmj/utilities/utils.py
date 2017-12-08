@@ -11,14 +11,16 @@ from petl.io.json import DictsView
 from petl.transform.basics import CutView
 from datetime import date, datetime
 
-logging.basicConfig(filename="logs/g1-etl-members.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-members")
+logging.basicConfig(filename="g1-etl-utils.log", level=logging.INFO)
+log = logging.getLogger("g1-etl-utils")
+
 
 def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
     return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+
 
 def view_to_list(data):
     if type(data) is DbView or type(data) is CutView:
@@ -29,11 +31,13 @@ def view_to_list(data):
     if type(data) is DictsView:
         return data
 
+
 def json_serial(obj):
     """JSON serializer for objects not serializable by default json code"""
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     raise TypeError("Type %s not serializable" % type(obj))
+
 
 def download_images(env, user_id, pic):
     """
@@ -84,12 +88,6 @@ def chunks(data, size):
     chunk = [data[i:i + size] for i in range(0, len(data), size)]
     return chunk
 
-
-def json_serial(obj):
-    """JSON serializer for objects not serializable by default json code"""
-    if isinstance(obj, (datetime, date)):
-        return obj.isoformat()
-    raise TypeError("Type %s not serializable" % type(obj))
 
 def mongo_connect_and_insert(payload):
     db = MongoClient('mongodb://localhost:3005/')

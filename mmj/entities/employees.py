@@ -29,7 +29,8 @@ def extract(organization_id, debug):
                                 db="mmjmenu_production")
     try:
         mmj_employees = utils.load_db_data(source_db, 'users')
-        mmj_dispensary_users = utils.load_db_data(source_db, 'dispensary_users')
+        mmj_dispensary_users = utils.load_db_data(source_db,
+                                                  'dispensary_users')
         return transform(mmj_employees, mmj_dispensary_users,
                          organization_id, debug)
 
@@ -82,7 +83,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organizationId'] = organization_id
-    mappings['organization_id'] = 'organization_id' #  keep mmj org
+    mappings['organization_id'] = 'organization_id'  # keep mmj org
     mappings['accountStatus'] = \
         lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"
 
@@ -109,6 +110,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
         print(result)
 
     return mapped_employees
+
 
 def assign_role(id):
     if id == 1 or id == 2:

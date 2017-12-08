@@ -17,7 +17,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id, cmdline):
+def extract(organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -105,7 +105,7 @@ def transform(source_data, organization_id, debug):
         # set up final structure for API
         vendors.append(item)
 
-    if cmdline:
+    if debug:
         result = json.dumps(vendors, sort_keys=True, indent=4,
                             default=utils.json_serial)
         print(result)

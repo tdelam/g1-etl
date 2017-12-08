@@ -5,7 +5,6 @@ import time
 from utilities import utils
 from entities import employees, members, menu_items, physicians, vendors
 
-
 def extract(organization_id):
     employees_extract = employees.extract(organization_id, False)
     members_extract = members.extract(organization_id, False)
