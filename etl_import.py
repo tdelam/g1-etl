@@ -1,14 +1,10 @@
-from utilities import utils
-import sys
 import json
-
-import employees
-import members
-import menu_items
-import vendors
-import physicians
-
+import sys
 import time
+
+from utilities import utils
+from entities import employees, members, menu_items, physicians, vendors
+
 
 def extract(organization_id):
     employees_extract = employees.extract(organization_id, False)
@@ -63,6 +59,9 @@ def extract(organization_id):
 
     #connect to the POS db and insert the tranformed payload
     utils.mongo_connect_and_insert(payload)
+
+    #
+    return result;
 
 if __name__ == '__main__':
     extract(sys.argv[1])

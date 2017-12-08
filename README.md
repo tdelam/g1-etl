@@ -1,5 +1,5 @@
 # g1-etl
-GrowOne ETL
+GrowOne MMJ ETL
 
 #### Set up Python Virtualenv
 `$ [sudo] pip install virtualenv`
@@ -40,3 +40,12 @@ Make sure so update your `~/.zshrc` or `~/.bashrc` with the following:
 #### Install dependencies
 
 `workon g1-etl`
+
+### Run webserver
+FLASK_APP=server.py flask run
+
+**REST endpoint**
+
+http://localhost:5000/import/extract
+
+* Expects organizationId in POST / multipart-form
