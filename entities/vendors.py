@@ -5,15 +5,10 @@ import MySQLdb
 import pymongo
 import petl as etl
 import json
-import logging
-import logging.handlers
 
 from collections import OrderedDict
 from utilities import utils
 
-
-logging.basicConfig(filename="logs/g1-etl-vendors.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-vendors")
 
 # handle characters outside of ascii
 reload(sys)

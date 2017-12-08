@@ -5,8 +5,6 @@ import sys
 import pymongo
 import petl as etl
 import json
-import logging
-import logging.handlers
 import os
 import urllib
 
@@ -27,9 +25,6 @@ sys.setdefaultencoding('latin-1')
 
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
-
-logging.basicConfig(filename="logs/g1-etl-menuitems.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-menuitems")
 
 
 def extract(organization_id, debug):
@@ -70,7 +65,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     cut_wm = ['menu_item_id', 'weedmaps_integration_id', 'weedmaps_id']
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
-    prices_data = etl.cut(prices, cut_prices) 
+    prices_data = etl.cut(prices, cut_prices)
 
     menu_items = (
         etl
@@ -117,7 +112,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
             .select(prices_data, lambda x: x.menu_item_id == item['menu_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
-        )         
+        )
 
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
