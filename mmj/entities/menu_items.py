@@ -166,8 +166,9 @@ def map_uom(category_id, categories):
             GRAM: 2
     """
     measurement = etl.selecteq(categories, 'id', category_id)
-    for measure in etl.dicts(measurement):
-        return 2 if measure['measurement'] == 1 else 1
+    if etl.nrows(measurement) > 0:
+        for measure in etl.dicts(measurement):
+            return 2 if measure['measurement'] == 1 else 1
 
 
 def map_categories(category_id, data, menu_items):
