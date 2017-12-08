@@ -36,12 +36,10 @@ def extract(organization_id):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-10171"
-                                "7-cluster.cluster-cmtxwpwvylo7.us-west-2.rds"
-                                ".amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = MySQLdb.connect(host="localhost",
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
 
     try:
         mmj_menu_items = load_db_data(source_db, 'menu_items')
@@ -68,31 +66,44 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
     cut_prices = ['menu_item_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
+
+    cut_wm = ['menu_item_id', 'weedmaps_integration_id', 'weedmaps_id']
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
-    prices_data = etl.cut(prices, cut_prices)
+    prices_data = etl.cut(prices, cut_prices) 
 
     menu_items = (
         etl
         .addfield(menu_items, 'organizationId')
         .addfield('createdAtEpoch')
+        .addfield('unitOfMeasure')
         .addfield('keys')
     )
 
     # Two-step transform and cut. First we need to cut the name
     # and id from the source data to map to.
-    cut_source_cats = etl.cut(mmj_categories, 'name', 'id')
+    cut_source_cats = etl.cut(mmj_categories, 'name', 'id', 'measurement')
     source_values = etl.values(cut_source_cats, 'name', 'id')
+    mmj_uom = etl.values(cut_source_cats, 'measurement', 'id')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
     mmj_categories = dict([(value, id) for (value, id) in source_values])
+    mmj_uom_dicts = dict([(value, id) for (value, id) in mmj_uom])
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['name'] = 'name'
+
+    """
+    1 = Units
+    2 = Grams (weight)
+    """
+    mappings['unitOfMeasure'] = \
+        lambda x: map_uom(x.category_id, mmj_uom_dicts)
+
     mappings['organizationId'] = organization_id
     mappings['categoryId'] = \
         lambda x: map_categories(x.category_id, mmj_categories, menu_items)
@@ -108,7 +119,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
             .select(prices_data, lambda x: x.menu_item_id == item['menu_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
-        )
+        )         
 
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
@@ -146,6 +157,12 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id):
                         indent=4, default=utils.json_serial)
     #print(result)
     return result
+
+
+def map_uom(category_id, data):
+    category = data.keys()[data.values().index(category_id)]
+    print(category)
+    print(category_id)
 
 
 def map_categories(category_id, data, menu_items):
