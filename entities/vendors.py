@@ -1,26 +1,23 @@
 from __future__ import division, print_function, absolute_import
 
-import sys
+import os,sys,inspect
 import MySQLdb
-import pymongo
 import petl as etl
 import json
-import logging
-import logging.handlers
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
 
 from collections import OrderedDict
 from utilities import utils
-
-
-logging.basicConfig(filename="logs/g1-etl-vendors.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-vendors")
 
 # handle characters outside of ascii
 reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id, debug):
+def extract(organization_id, cmdline):
     """
     Grab all data from source(s).
     """
@@ -108,7 +105,7 @@ def transform(source_data, organization_id, debug):
         # set up final structure for API
         vendors.append(item)
 
-    if debug:
+    if cmdline:
         result = json.dumps(vendors, sort_keys=True, indent=4,
                             default=utils.json_serial)
         print(result)

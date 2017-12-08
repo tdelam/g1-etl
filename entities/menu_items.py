@@ -1,25 +1,21 @@
 from __future__ import division, print_function, absolute_import
 
 import MySQLdb
-import sys
-import pymongo
+import os,sys,inspect
 import petl as etl
 import json
-import logging
-import logging.handlers
-import os
-import urllib
-
 
 from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
-from collections import OrderedDict
 
-from pattern.text.en import singularize
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
 
 from utilities import utils
-
+from collections import OrderedDict
+from pattern.text.en import singularize
 
 # handle characters outside of ascii
 reload(sys)
@@ -27,9 +23,6 @@ sys.setdefaultencoding('latin-1')
 
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
-
-logging.basicConfig(filename="logs/g1-etl-menuitems.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-menuitems")
 
 
 def extract(organization_id, debug):
@@ -70,7 +63,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     cut_wm = ['menu_item_id', 'weedmaps_integration_id', 'weedmaps_id']
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
-    prices_data = etl.cut(prices, cut_prices) 
+    prices_data = etl.cut(prices, cut_prices)
 
     menu_items = (
         etl
@@ -117,7 +110,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
             .select(prices_data, lambda x: x.menu_item_id == item['menu_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
-        )         
+        )
 
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
@@ -209,23 +202,6 @@ def lab_results(data):
     # Put lab results on their own as this will be its own collection later
     lab_results = etl.cut(data, *range(11, 16))
     return lab_results
-
-
-def load_db_data(db, table_name):
-    """
-    Data extracted from source db
-    """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
-
-
-def view_to_list(data):
-    if type(data) is DbView or type(data) is CutView:
-        # convert the view to a lists of lists for petl
-        # map is quicker than list comp
-        return list(map(list, data))
-
-    if type(data) is DictsView:
-        return data
 
 
 if __name__ == '__main__':

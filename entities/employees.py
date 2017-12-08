@@ -1,18 +1,16 @@
 from __future__ import division, print_function, absolute_import
 
-import sys
+import os,sys,inspect
 import MySQLdb
 import petl as etl
 import json
-import logging
-import logging.handlers
 
-from collections import OrderedDict
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0,parentdir)
+
 from utilities import utils
-
-
-logging.basicConfig(filename="logs/g1-etl-employees.log", level=logging.INFO)
-log = logging.getLogger("g1-etl-employees")
+from collections import OrderedDict
 
 # handle characters outside of ascii
 reload(sys)

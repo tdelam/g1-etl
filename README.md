@@ -49,3 +49,9 @@ FLASK_APP=server.py flask run
 http://localhost:5000/import/extract
 
 * Expects organizationId in POST / multipart-form
+
+### Test individual entity extraction python scripts
+
+`$ python entities/employees 420`
+
+* Expects organizationId pass as cmd line arg
