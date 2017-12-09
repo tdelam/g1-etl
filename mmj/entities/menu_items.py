@@ -35,7 +35,6 @@ def extract(organization_id, debug):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-
     try:
         mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
         mmj_categories = utils.load_db_data(source_db, 'categories')
@@ -98,8 +97,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
         lambda x: map_uom(x.category_id, cut_source_cats)
 
     mappings['organizationId'] = organization_id
-    mappings['categoryId'] = \
-        lambda x: map_categories(x.category_id, mmj_categories, menu_items)
+
     mappings['active'] = lambda x: True if x.on_hold == 1 else False
 
     fields = etl.fieldmap(menu_items, mappings)
@@ -114,6 +112,9 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
             .cutout('menu_item_id')
         )
 
+        item['categoryId'] = map_categories(item['category_id'],
+                                               item['sativa'], item['indica'],
+                                               mmj_categories, menu_items)
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
@@ -171,21 +172,24 @@ def map_uom(category_id, categories):
             return 2 if measure['measurement'] == 1 else 1
 
 
-def map_categories(category_id, data, menu_items):
+def map_categories(category_id, sativa, indica, data, menu_items):
+    """
+    If the menu item that are % indica and % sativa. If > indica threshold, 
+    it goes into indica, if > sativa threshold it goes into sativa, 
+    if neither it goes into hybrid. The other conditions within this will
+    map to G1's naming convention, i.e: MMJ Drinks => G1 Drink
+    """
     try:
         category = data.keys()[data.values().index(category_id)]
         if category == 'Cannabis':
-            strain_data = etl.cut(menu_items, 'sativa', 'indica',
-                                              'category_id', 'id')
-            strain_vals = etl.dicts(strain_data)
-            for strain in strain_vals.__iter__():
-                if strain['sativa'] > 0 or strain['indica'] > 0:
-                    if strain['sativa'] >= 80:
-                        return 'Sativa'
-                    if strain['indica'] >= 80:
-                        return 'Indica'
-                else:
-                    return 'Hybrid'
+            if sativa > 0 and indica > 0:
+                if sativa > 80:
+                    return 'Sativa'
+                if indica > 80:
+                    return 'Indica'
+            else:
+                return 'Hybrid'
+
         if category == 'Paraphernalia':
             return 'Gear'
         if category == 'Tincture':
