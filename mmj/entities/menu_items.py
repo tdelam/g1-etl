@@ -11,16 +11,16 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 
-from utilities import utils
 from collections import OrderedDict
 from pattern.text.en import singularize
-
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))
 )
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
+
+from utilities import utils
 
 # handle characters outside of ascii
 reload(sys)
@@ -48,18 +48,21 @@ def extract(organization_id, debug):
                                              'menu_item_weedmaps_integrations')
 
         return transform(mmj_menu_items, mmj_categories,
-                         prices, organization_id, debug)
+                         prices, organization_id, wm_integrations, debug)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
+def transform(mmj_menu_items, mmj_categories, prices, 
+              organization_id, wm_integrations, debug):
     """
     Transform data
     """
     # source data table
     source_dt = utils.view_to_list(mmj_menu_items)
+    wm_integrations = utils.view_to_list(wm_integrations)
+
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
                      'name', 'sativa', 'indica', 'on_hold']
@@ -68,10 +71,12 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
 
-    cut_wm = ['menu_item_id', 'weedmaps_integration_id', 'weedmaps_id']
+    cut_wm_integrations = ['id', 'menu_item_id']
+
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
     prices_data = etl.cut(prices, cut_prices)
+    wm_integrations_data = etl.cut(wm_integrations, cut_wm_integrations)
 
     menu_items = (
         etl
@@ -85,6 +90,9 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     # and id from the source data to map to.
     cut_source_cats = etl.cut(mmj_categories, 'name', 'id', 'measurement')
     source_values = etl.values(cut_source_cats, 'name', 'id')
+    
+    
+    lookup_wm_integration = etl.lookup(wm_integrations_data, 'id', 'menu_item_id')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
@@ -95,7 +103,8 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['name'] = 'name'
-
+    mappings['shareOnWM'] = \
+        lambda x: True if lookup_wm_integration[x.id] else False
     """
     1 = Units
     2 = Grams (weight)
@@ -104,7 +113,6 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
         lambda x: map_uom(x.category_id, cut_source_cats)
 
     mappings['organizationId'] = organization_id
-
     mappings['active'] = lambda x: True if x.on_hold == 1 else False
 
     fields = etl.fieldmap(menu_items, mappings)

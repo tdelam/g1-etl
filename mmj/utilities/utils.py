@@ -1,13 +1,11 @@
 import urllib2
 import logging
 import logging.handlers
-
 from datetime import date, datetime
 
 from pymongo import MongoClient
 
 import petl as etl
-
 from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
