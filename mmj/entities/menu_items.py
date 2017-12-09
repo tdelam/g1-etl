@@ -1,6 +1,8 @@
 from __future__ import division, print_function, absolute_import
 
-import os,sys,inspect
+import os
+import sys
+import inspect
 import MySQLdb
 import petl as etl
 import json
@@ -9,13 +11,16 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
-
 from utilities import utils
 from collections import OrderedDict
 from pattern.text.en import singularize
+
+
+currentdir = os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe()))
+)
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
 
 # handle characters outside of ascii
 reload(sys)
@@ -39,6 +44,8 @@ def extract(organization_id, debug):
         mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
         mmj_categories = utils.load_db_data(source_db, 'categories')
         prices = utils.load_db_data(source_db, 'menu_item_prices')
+        wm_integrations = utils.load_db_data(source_db,
+                                             'menu_item_weedmaps_integrations')
 
         return transform(mmj_menu_items, mmj_categories,
                          prices, organization_id, debug)
@@ -113,8 +120,8 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
         )
 
         item['categoryId'] = map_categories(item['category_id'],
-                                               item['sativa'], item['indica'],
-                                               mmj_categories, menu_items)
+                                            item['sativa'], item['indica'],
+                                            mmj_categories, menu_items)
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
@@ -174,8 +181,8 @@ def map_uom(category_id, categories):
 
 def map_categories(category_id, sativa, indica, data, menu_items):
     """
-    If the menu item that are % indica and % sativa. If > indica threshold, 
-    it goes into indica, if > sativa threshold it goes into sativa, 
+    If the menu item that are % indica and % sativa. If > indica threshold,
+    it goes into indica, if > sativa threshold it goes into sativa,
     if neither it goes into hybrid. The other conditions within this will
     map to G1's naming convention, i.e: MMJ Drinks => G1 Drink
     """
