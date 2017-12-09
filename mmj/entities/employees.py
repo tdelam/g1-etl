@@ -7,9 +7,7 @@ import MySQLdb
 import petl as etl
 import json
 
-from utilities import utils
 from collections import OrderedDict
-
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))
@@ -17,6 +15,7 @@ currentdir = os.path.dirname(os.path.abspath(
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir)
 
+from utilities import utils
 
 # handle characters outside of ascii
 reload(sys)
