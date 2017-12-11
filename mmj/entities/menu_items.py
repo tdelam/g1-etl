@@ -69,8 +69,7 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
 
     menu_items = (
         etl
-        .addfield(menu_items, 'organizationId')
-        .addfield('createdAtEpoch')
+        .addfield(menu_items, 'createdAtEpoch')
         .addfield('unitOfMeasure')
         .addfield('keys')
     )
@@ -97,7 +96,6 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     mappings['unitOfMeasure'] = \
         lambda x: map_uom(x.category_id, cut_source_cats)
 
-    mappings['organizationId'] = organization_id
     mappings['categoryId'] = \
         lambda x: map_categories(x.category_id, mmj_categories, menu_items)
     mappings['active'] = lambda x: True if x.on_hold == 1 else False

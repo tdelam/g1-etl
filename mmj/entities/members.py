@@ -56,7 +56,6 @@ def transform(source_data, organization_id, debug):
         etl
         .addfield(member_data, 'identificationType')
         .addfield('createdAtEpoch')
-        .addfield('organizationId')
     )
 
     member_mapping = OrderedDict()
@@ -92,7 +91,6 @@ def transform(source_data, organization_id, debug):
     member_mapping['state'] = 'state'
     member_mapping['createdAt'] = 'created_at'
     member_mapping['updatedAt'] = 'updated_at'
-    member_mapping['organizationId'] = organization_id
 
     member_mapping['accountStatus'] = \
         lambda x: 'INACTIVE' if x.locked_visits == 1 else "ACTIVE"
@@ -105,6 +103,7 @@ def transform(source_data, organization_id, debug):
     members = []
     for item in etl.dicts(member_fields):
         item['keys'] = {
+            'id': item['id'],
             'caregiver_id': item['caregiver_id'],
             'dispensary_id': item['dispensary_id'],
             'physician_id': item['physician_id'],
@@ -117,12 +116,12 @@ def transform(source_data, organization_id, debug):
         item['identificationType'] = 'Drivers License'
 
         # We may not need this in the data
-        item['address'] = {
+        item['address'] = [{
             'line1': item['address'],
             'city': item['city'],
             'state': item['state'],
             'zip': item['zip_code'],
-        }
+        }]
 
         del item['address']
         del item['city']

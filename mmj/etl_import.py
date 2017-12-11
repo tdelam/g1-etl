@@ -17,7 +17,7 @@ def extract(organization_id):
     # the imports table
 
     payload = {
-        'organizationId': organization_id,
+        'organizationId': str(organization_id),
         'employees': employees_extract,
         'members': members_extract,
         'products': menu_items_extract,

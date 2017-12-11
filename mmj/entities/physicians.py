@@ -48,8 +48,7 @@ def transform(source_data, organization_id, debug):
 
     physicians = (
         etl
-        .addfield(physician_data, 'organizationId')
-        .addfield('createdAtEpoch')
+        .addfield(physician_data, 'createdAtEpoch')
     )
 
     physician_mapping = OrderedDict()
@@ -68,7 +67,6 @@ def transform(source_data, organization_id, debug):
     physician_mapping['verificationWebsite'] = 'website'
     physician_mapping['licenceNumber'] = 'license_no'
     physician_mapping['phone'] = 'phone_number'
-    physician_mapping['organizationId'] = organization_id
 
     physician_fields = etl.fieldmap(physicians, physician_mapping)
 
@@ -79,13 +77,13 @@ def transform(source_data, organization_id, debug):
             'id': item['id']
         }
 
-        item['address'] = {
+        item['address'] = [{
             'line1': item['address'],
             'city': item['city'],
             'state': item['state'],
             'zip': item['zip_code'],
             'country': item['country'],
-        }
+        }]
 
         item['phone'] = [{
             'name': 'work',

@@ -56,8 +56,7 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
 
     employees = (
         etl
-        .addfield(employee_data, 'organizationId')
-        .addfield('keys')
+        .addfield(employee_data, 'keys')
         .addfield('name')
         .addfield('role')
     )
@@ -82,7 +81,6 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
 
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
-    mappings['organizationId'] = organization_id
     mappings['organization_id'] = 'organization_id'  # keep mmj org
     mappings['accountStatus'] = \
         lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"

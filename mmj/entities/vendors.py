@@ -44,10 +44,7 @@ def transform(source_data, organization_id, debug):
                 'email', 'country', 'state', 'city', 'address', 'zip_code',
                 'liscense_no', 'confirmed', 'website']
     vendor_data = etl.cut(source_dt, cut_data)
-    vendors = (
-        etl
-        .addfield(vendor_data, 'organizationId')
-    )
+
 
     vendor_mappings = OrderedDict()
     vendor_mappings['id'] = 'id'
@@ -60,10 +57,9 @@ def transform(source_data, organization_id, debug):
     vendor_mappings['phone'] = 'phone_number'
     vendor_mappings['licenceNumber'] = 'liscense_no'
     vendor_mappings['zip'] = 'zip_code'
-    vendor_mappings['organizationId'] = organization_id
 
-    vendors_fields = etl.fieldmap(vendors, vendor_mappings)
-    merged_vendors = etl.merge(vendors, vendors_fields, key='id')
+    vendors_fields = etl.fieldmap(vendor_data, vendor_mappings)
+    merged_vendors = etl.merge(vendor_data, vendors_fields, key='id')
 
     vendors = []
     for item in etl.dicts(merged_vendors):
