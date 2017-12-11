@@ -4,6 +4,8 @@ import logging.handlers
 from datetime import date, datetime
 
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+
 
 import petl as etl
 from petl.io.db import DbView
@@ -90,6 +92,26 @@ def chunks(data, size):
 
 
 def mongo_connect_and_insert(payload):
+    """
+    Connects to mongodb.
+    Injects pre-generated unique _id.
+    Inserts payload into the Imports collection.
+    """
     db = MongoClient('mongodb://localhost:3005/')
     imports = db.meteor.etl.imports
-    imports.insert_one(payload)
+    payload['_id'] = generate_unique_mongo_id(imports) #inject pre-generated and validated ObjectId String
+    imports.insert_one(payload) #insert paylaod
+
+def generate_unique_mongo_id(imports):
+    """
+    Generates an object id and extracts the hex string.
+    Checks the import collection for _id collisions on the hex string.
+    Returns unique hex string.
+    """
+    mongo_id = None
+    while True:
+      mongo_id = str(ObjectId())
+      id_match = imports.find_one({'_id': mongo_id})
+      if id_match == None:
+          break
+    return mongo_id
