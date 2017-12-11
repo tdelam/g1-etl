@@ -1,6 +1,8 @@
 from __future__ import division, print_function, absolute_import
 
-import os,sys,inspect
+import os
+import sys
+import inspect
 import MySQLdb
 import petl as etl
 import json
@@ -9,13 +11,16 @@ from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
 
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
-
-from utilities import utils
 from collections import OrderedDict
 from pattern.text.en import singularize
+
+currentdir = os.path.dirname(os.path.abspath(
+    inspect.getfile(inspect.currentframe()))
+)
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir)
+
+from utilities import utils
 
 # handle characters outside of ascii
 reload(sys)
@@ -35,25 +40,29 @@ def extract(organization_id, debug):
                                 user="mmjmenu_app",
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
-
     try:
         mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
         mmj_categories = utils.load_db_data(source_db, 'categories')
         prices = utils.load_db_data(source_db, 'menu_item_prices')
+        wm_integrations = utils.load_db_data(source_db,
+                                             'menu_item_weedmaps_integrations')
 
         return transform(mmj_menu_items, mmj_categories,
-                         prices, organization_id, debug)
+                         prices, organization_id, wm_integrations, debug)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
+def transform(mmj_menu_items, mmj_categories, prices, 
+              organization_id, wm_integrations, debug):
     """
     Transform data
     """
     # source data table
     source_dt = utils.view_to_list(mmj_menu_items)
+    wm_integrations = utils.view_to_list(wm_integrations)
+
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
                      'name', 'sativa', 'indica', 'on_hold']
@@ -62,10 +71,12 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
 
-    cut_wm = ['menu_item_id', 'weedmaps_integration_id', 'weedmaps_id']
+    cut_wm_integrations = ['id', 'menu_item_id']
+
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
     prices_data = etl.cut(prices, cut_prices)
+    wm_integrations_data = etl.cut(wm_integrations, cut_wm_integrations)
 
     menu_items = (
         etl
@@ -78,6 +89,9 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     # and id from the source data to map to.
     cut_source_cats = etl.cut(mmj_categories, 'name', 'id', 'measurement')
     source_values = etl.values(cut_source_cats, 'name', 'id')
+    
+    
+    lookup_wm_integration = etl.lookup(wm_integrations_data, 'id', 'menu_item_id')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
@@ -88,7 +102,8 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['name'] = 'name'
-
+    mappings['shareOnWM'] = \
+        lambda x: True if lookup_wm_integration[x.id] else False
     """
     1 = Units
     2 = Grams (weight)
@@ -96,8 +111,6 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
     mappings['unitOfMeasure'] = \
         lambda x: map_uom(x.category_id, cut_source_cats)
 
-    mappings['categoryId'] = \
-        lambda x: map_categories(x.category_id, mmj_categories, menu_items)
     mappings['active'] = lambda x: True if x.on_hold == 1 else False
 
     fields = etl.fieldmap(menu_items, mappings)
@@ -112,6 +125,9 @@ def transform(mmj_menu_items, mmj_categories, prices, organization_id, debug):
             .cutout('menu_item_id')
         )
 
+        item['categoryId'] = map_categories(item['category_id'],
+                                            item['sativa'], item['indica'],
+                                            mmj_categories, menu_items)
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id'],
@@ -169,21 +185,24 @@ def map_uom(category_id, categories):
             return 2 if measure['measurement'] == 1 else 1
 
 
-def map_categories(category_id, data, menu_items):
+def map_categories(category_id, sativa, indica, data, menu_items):
+    """
+    If the menu item that are % indica and % sativa. If > indica threshold,
+    it goes into indica, if > sativa threshold it goes into sativa,
+    if neither it goes into hybrid. The other conditions within this will
+    map to G1's naming convention, i.e: MMJ Drinks => G1 Drink
+    """
     try:
         category = data.keys()[data.values().index(category_id)]
         if category == 'Cannabis':
-            strain_data = etl.cut(menu_items, 'sativa', 'indica',
-                                              'category_id', 'id')
-            strain_vals = etl.dicts(strain_data)
-            for strain in strain_vals.__iter__():
-                if strain['sativa'] > 0 or strain['indica'] > 0:
-                    if strain['sativa'] >= 80:
-                        return 'Sativa'
-                    if strain['indica'] >= 80:
-                        return 'Indica'
-                else:
-                    return 'Hybrid'
+            if sativa > 0 and indica > 0:
+                if sativa > 80:
+                    return 'Sativa'
+                if indica > 80:
+                    return 'Indica'
+            else:
+                return 'Hybrid'
+
         if category == 'Paraphernalia':
             return 'Gear'
         if category == 'Tincture':
