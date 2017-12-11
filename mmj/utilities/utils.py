@@ -99,8 +99,10 @@ def mongo_connect_and_insert(payload):
     """
     db = MongoClient('mongodb://localhost:3005/')
     imports = db.meteor.etl.imports
-    payload['_id'] = generate_unique_mongo_id(imports) #inject pre-generated and validated ObjectId String
-    imports.insert_one(payload) #insert paylaod
+    # inject pre-generated and validated ObjectId String
+    payload['_id'] = generate_unique_mongo_id(imports)
+    imports.insert_one(payload)  # insert paylaod
+
 
 def generate_unique_mongo_id(imports):
     """
@@ -110,8 +112,30 @@ def generate_unique_mongo_id(imports):
     """
     mongo_id = None
     while True:
-      mongo_id = str(ObjectId())
-      id_match = imports.find_one({'_id': mongo_id})
-      if id_match == None:
-          break
+        mongo_id = str(ObjectId())
+        id_match = imports.find_one({'_id': mongo_id})
+        if id_match is None:
+            break
     return mongo_id
+
+
+def true_or_false(value):
+    """
+    Returns true or false for transforming
+    """
+    if value == 1:
+        return True
+    elif value == 0:
+        return False
+    return False
+
+
+def account_status(status):
+    """
+    Returns ACTIVE or INACTIVE for transforming
+    """
+    if status == 1:
+        return "INACTIVE"  # True for inactive
+    elif status == 0:
+        return "ACTIVE"
+    return False

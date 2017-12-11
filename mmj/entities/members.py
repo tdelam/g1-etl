@@ -44,6 +44,7 @@ def transform(source_data, organization_id, debug):
     """
     # source data table
     source_dt = utils.view_to_list(source_data)
+
     cut_data = [
         'id', 'dispensary_id', 'picture_file_name', 'name', 'email',
         'address', 'phone_number', 'dob', 'license_type', 'registry_no',
@@ -81,12 +82,11 @@ def transform(source_data, organization_id, debug):
 
     member_mapping['mmjCard'] = 'registry_no'
     member_mapping['isCaregiver'] = \
-        lambda x: True if x.given_caregivership == 1 else False
+        lambda x: utils.true_or_false(x.given_caregivership)
     member_mapping['identificationNumber'] = 'drivers_license_no'
     member_mapping['points'] = 'points'
     member_mapping['expiryDate'] = 'card_expires_at'
-    member_mapping['taxExempt'] = \
-        lambda x: True if x.tax_exempt == 1 else False
+    member_mapping['taxExempt'] = lambda x: utils.true_or_false(x.tax_exempt)
     member_mapping['locked_visits'] = 'locked_visits'
     member_mapping['locked_visits_reason'] = 'accountStatusNotes'
     member_mapping['address'] = 'address'
@@ -97,10 +97,7 @@ def transform(source_data, organization_id, debug):
     member_mapping['updatedAt'] = 'updated_at'
 
     member_mapping['accountStatus'] = \
-        lambda x: 'INACTIVE' if x.locked_visits == 1 else "ACTIVE"
-
-    member_mapping['taxExempt'] = 'taxExempt', \
-        lambda x: True if x.taxExempt == 1 else False
+        lambda x: utils.account_status(x.locked_visits)
 
     member_fields = etl.fieldmap(members, member_mapping)
 
