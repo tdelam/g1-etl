@@ -101,6 +101,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
     mappings['id'] = 'id'
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
+    mappings['createdAtEpoch'] = lambda x: utils.create_epoch(x.created_at)
     mappings['name'] = 'name'
     mappings['shareOnWM'] = \
         lambda x: True if lookup_wm_integration[x.id] else False

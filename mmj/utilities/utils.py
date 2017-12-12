@@ -1,8 +1,10 @@
 import urllib2
 import logging
 import logging.handlers
-from datetime import date, datetime
+import time
 
+from datetime import date, datetime
+from calendar import timegm
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
@@ -139,3 +141,7 @@ def account_status(status):
     elif status == 0:
         return "ACTIVE"
     return False
+
+
+def create_epoch(dt):
+    return int(dt.strftime('%s'))
