@@ -50,7 +50,7 @@ def transform(mmj_employees, organization_id, debug, source_db):
     # source data table
     source_dt = utils.view_to_list(mmj_employees)
     cut_data = ['id', 'email', 'first_name', 'organization_id',
-                'last_name', 'created_at', 'updated_at']
+                'last_name', 'created_at', 'updated_at', 'login']
 
     employee_data = etl.cut(source_dt, cut_data)
 
@@ -66,7 +66,7 @@ def transform(mmj_employees, organization_id, debug, source_db):
     mappings['id'] = 'id'
     mappings['email'] = 'email'
     mappings['name'] = \
-        lambda name: "{0} {1}".format(name.first_name, name.last_name)
+        lambda name: _set_name(name.first_name, name.last_name, name.login)
 
     """
     Roles:
@@ -94,6 +94,8 @@ def transform(mmj_employees, organization_id, debug, source_db):
             'id': item['id'],
             'organization_id': item['organization_id']
         }
+
+        del item['login']
         del item['first_name']
         del item['last_name']
         del item['created_at']
@@ -108,6 +110,14 @@ def transform(mmj_employees, organization_id, debug, source_db):
         print(result)
 
     return mapped_employees
+
+
+def _set_name(first_name, last_name, login):
+    #import pdb; pdb.set_trace()
+    if first_name is None and last_name is None:
+        return login
+    else:
+        return "{0} {1}".format(first_name, last_name)
 
 
 def _active(id, source_db):
