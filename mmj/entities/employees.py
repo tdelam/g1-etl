@@ -34,30 +34,25 @@ def extract(organization_id, debug):
                                 db="mmjmenu_production")
     try:
         mmj_employees = utils.load_db_data(source_db, 'users')
-        mmj_dispensary_users = utils.load_db_data(source_db,
-                                                  'dispensary_users')
-        return transform(mmj_employees, mmj_dispensary_users,
-                         organization_id, debug)
+
+        return transform(mmj_employees,
+                         organization_id, debug, source_db)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
+def transform(mmj_employees, organization_id, debug, source_db):
     """
     Load the transformed data into the destination(s)
     """
     # source data table
     source_dt = utils.view_to_list(mmj_employees)
-    roles_dt = utils.view_to_list(mmj_dispensary_users)
 
     cut_data = ['id', 'email', 'first_name', 'organization_id',
                 'last_name', 'created_at', 'updated_at']
 
-    cut_dispensary_users = ['id', 'access', 'active']
-
     employee_data = etl.cut(source_dt, cut_data)
-    roles_data = etl.cut(roles_dt, cut_dispensary_users)
 
     employees = (
         etl
@@ -65,9 +60,6 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
         .addfield('name')
         .addfield('role')
     )
-
-    lookup_role = etl.lookup(roles_data, 'id', 'access')
-    lookup_active = etl.lookup(roles_data, 'id', 'active')
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
@@ -82,13 +74,12 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
         3 = store-manager
         4 = budtender
     """
-    mappings['role'] = lambda x: assign_role(lookup_role[x.id][0])
+    mappings['role'] = lambda x: assign_role(x.id, source_db)
 
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organization_id'] = 'organization_id'  # keep mmj org
-    mappings['accountStatus'] = \
-        lambda x: "ACTIVE" if lookup_active[x.id][0] == 1 else "INACTIVE"
+    mappings['accountStatus'] = lambda x: active(x.id, source_db)
 
     fields = etl.fieldmap(employees, mappings)
     merged_employees = etl.merge(employees, fields, key='id')
@@ -115,13 +106,43 @@ def transform(mmj_employees, mmj_dispensary_users, organization_id, debug):
     return mapped_employees
 
 
-def assign_role(id):
-    if id == 1 or id == 2:
-        return 'site-admin'
-    elif id == 3:
-        return 'store-manager'
-    else:
-        return 'budtender'
+def active(id, source_db):
+    """
+    This exists because the 'active' field is on the dispensary_users table
+    in MMJ. The extract method queries the 'users' table. We have no way
+    to know which user_id to use because out util script only loads from
+    the sources limit 10 when we need to query related table by user_id
+    """
+    sql = ("SELECT DISTINCT active, user_id "
+           "FROM dispensary_users "
+           "WHERE user_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql) 
+    try:
+        lookup_active = etl.lookup(data, 'user_id', 'active')
+        if lookup_active[id][0] == 1:
+            return 'ACTIVE'
+    except KeyError:
+        return "INACTIVE"
+
+
+def assign_role(id, source_db):
+    sql = ("SELECT DISTINCT access, user_id "
+           "FROM dispensary_users "
+           "WHERE user_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql)    
+    try:
+        role = etl.lookup(data, 'user_id', 'access')
+        role_id = role[id][0]
+        if role_id == 1 or role_id == 2:
+            return 'site-admin'
+        elif id == 3:
+            return 'store-manager'
+        else:
+            return 'budtender'
+    except KeyError:
+        return 'budtender'  # only gets here if we get a null
 
 
 if __name__ == '__main__':
