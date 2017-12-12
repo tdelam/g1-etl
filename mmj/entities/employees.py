@@ -113,7 +113,10 @@ def transform(mmj_employees, organization_id, debug, source_db):
 
 
 def _set_name(first_name, last_name, login):
-    #import pdb; pdb.set_trace()
+    """
+    sets the name of the employee. If first and last name are blank
+    we're going to use the login 
+    """
     if first_name is None and last_name is None:
         return "{0}".format(login)
     else:
