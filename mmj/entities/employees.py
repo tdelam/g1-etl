@@ -6,6 +6,7 @@ import inspect
 import MySQLdb
 import petl as etl
 import json
+import datetime 
 
 from collections import OrderedDict
 
@@ -48,7 +49,6 @@ def transform(mmj_employees, organization_id, debug, source_db):
     """
     # source data table
     source_dt = utils.view_to_list(mmj_employees)
-
     cut_data = ['id', 'email', 'first_name', 'organization_id',
                 'last_name', 'created_at', 'updated_at']
 
@@ -59,6 +59,7 @@ def transform(mmj_employees, organization_id, debug, source_db):
         .addfield(employee_data, 'keys')
         .addfield('name')
         .addfield('role')
+        .addfield('dateOfBirth')
     )
 
     mappings = OrderedDict()
@@ -78,6 +79,9 @@ def transform(mmj_employees, organization_id, debug, source_db):
 
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
+    mappings['dateOfBirth'] = \
+        lambda _: datetime.datetime(year=1970, month=01, 
+                                    day=01, hour=02, minute=30)
     mappings['organization_id'] = 'organization_id'  # keep mmj org
     mappings['accountStatus'] = lambda x: _active(x.id, source_db)
 
