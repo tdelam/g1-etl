@@ -95,6 +95,12 @@ def transform(source_data, organization_id, debug):
             'default': True
         }]
 
+        if item['licenceNumber'] is None or item['verificationWebsite'] \
+            is None or item['email'] is None:
+                del item['licenceNumber']
+                del item['verificationWebsite']
+                del item['email']
+
         del item['city']
         del item['zip_code']
         del item['state']
