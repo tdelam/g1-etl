@@ -74,12 +74,12 @@ def transform(mmj_employees, organization_id, debug, source_db):
         3 = store-manager
         4 = budtender
     """
-    mappings['role'] = lambda x: assign_role(x.id, source_db)
+    mappings['role'] = lambda x: _assign_role(x.id, source_db)
 
     mappings['createdAt'] = 'created_at'
     mappings['updatedAt'] = 'updated_at'
     mappings['organization_id'] = 'organization_id'  # keep mmj org
-    mappings['accountStatus'] = lambda x: active(x.id, source_db)
+    mappings['accountStatus'] = lambda x: _active(x.id, source_db)
 
     fields = etl.fieldmap(employees, mappings)
     merged_employees = etl.merge(employees, fields, key='id')
@@ -106,11 +106,11 @@ def transform(mmj_employees, organization_id, debug, source_db):
     return mapped_employees
 
 
-def active(id, source_db):
+def _active(id, source_db):
     """
     This exists because the 'active' field is on the dispensary_users table
     in MMJ. The extract method queries the 'users' table. We have no way
-    to know which user_id to use because out util script only loads from
+    to know which user_id to use because our util script only loads from
     the sources limit 10 when we need to query related table by user_id
     """
     sql = ("SELECT DISTINCT active, user_id "
@@ -126,7 +126,13 @@ def active(id, source_db):
         return "INACTIVE"
 
 
-def assign_role(id, source_db):
+def _assign_role(id, source_db):
+    """
+    This exists because the 'access' field is on the dispensary_users table
+    in MMJ. The extract method queries the 'users' table. We have no way
+    to know which user_id to use because our util script only loads from
+    the sources limit 10 when we need to query related table by user_id
+    """
     sql = ("SELECT DISTINCT access, user_id "
            "FROM dispensary_users "
            "WHERE user_id={0}").format(id)
