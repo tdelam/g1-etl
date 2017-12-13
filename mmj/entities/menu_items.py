@@ -45,8 +45,8 @@ def extract(organization_id, debug):
         mmj_categories = utils.load_db_data(source_db, 'categories')
         prices = utils.load_db_data(source_db, 'menu_item_prices')
 
-        return transform(mmj_menu_items, mmj_categories,
-                         prices, organization_id, source_db, debug)
+        return transform(mmj_menu_items, mmj_categories, prices,
+                         organization_id, source_db, debug)
 
     finally:
         source_db.close()
@@ -101,7 +101,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
     2 = Grams (weight)
     """
     mappings['unitOfMeasure'] = \
-        lambda x: map_uom(x.category_id, cut_source_cats)
+        lambda x: _map_uom(x.category_id, source_db)
 
     mappings['active'] = lambda x: True if x.on_hold == 1 else False
 
@@ -117,7 +117,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
             .cutout('menu_item_id')
         )
 
-        item['categoryId'] = map_categories(item['category_id'],
+        item['categoryId'] = _map_categories(item['category_id'],
                                             item['sativa'], item['indica'],
                                             mmj_categories, menu_items)
         item['keys'] = {
@@ -180,7 +180,7 @@ def _wm_integration(id, source_db):
     return False
 
 
-def map_uom(category_id, categories):
+def _map_uom(category_id, source_db):
     """
     Maps the UOM.
         This is going to look backwards but it's because on G1 the enum for
@@ -191,13 +191,18 @@ def map_uom(category_id, categories):
             UNITS: 1
             GRAM: 2
     """
-    measurement = etl.selecteq(categories, 'id', category_id)
-    if etl.nrows(measurement) > 0:
-        for measure in etl.dicts(measurement):
-            return 2 if measure['measurement'] == 1 else 1
 
+    sql = ("SELECT DISTINCT measurement, id "
+           "FROM categories "
+           "WHERE id={0}").format(category_id)
 
-def map_categories(category_id, sativa, indica, data, menu_items):
+    data = etl.fromdb(source_db, sql) 
+    measurement = etl.lookup(data, 'id', 'measurement')
+    if measurement[category_id][0] == 1:
+        return 2
+    return 1
+
+def _map_categories(category_id, sativa, indica, data, menu_items):
     """
     If the menu item that are % indica and % sativa. If > indica threshold,
     it goes into indica, if > sativa threshold it goes into sativa,
