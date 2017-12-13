@@ -44,24 +44,21 @@ def extract(organization_id, debug):
         mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
         mmj_categories = utils.load_db_data(source_db, 'categories')
         prices = utils.load_db_data(source_db, 'menu_item_prices')
-        wm_integrations = utils.load_db_data(source_db,
-                                             'menu_item_weedmaps_integrations')
 
         return transform(mmj_menu_items, mmj_categories,
-                         prices, organization_id, wm_integrations, debug)
+                         prices, organization_id, source_db, debug)
 
     finally:
         source_db.close()
 
 
 def transform(mmj_menu_items, mmj_categories, prices, 
-              organization_id, wm_integrations, debug):
+              organization_id, source_db, debug):
     """
     Transform data
     """
     # source data table
     source_dt = utils.view_to_list(mmj_menu_items)
-    wm_integrations = utils.view_to_list(wm_integrations)
 
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
@@ -71,12 +68,10 @@ def transform(mmj_menu_items, mmj_categories, prices,
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
 
-    cut_wm_integrations = ['id', 'menu_item_id']
 
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
     prices_data = etl.cut(prices, cut_prices)
-    wm_integrations_data = etl.cut(wm_integrations, cut_wm_integrations)
 
     menu_items = (
         etl
@@ -89,9 +84,6 @@ def transform(mmj_menu_items, mmj_categories, prices,
     # and id from the source data to map to.
     cut_source_cats = etl.cut(mmj_categories, 'name', 'id', 'measurement')
     source_values = etl.values(cut_source_cats, 'name', 'id')
-    
-    
-    lookup_wm_integration = etl.lookup(wm_integrations_data, 'id', 'menu_item_id')
 
     # Then we nede a dict of categories to compare against.
     # id is stored to match against when transforming and mapping categories
@@ -103,8 +95,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
     mappings['updatedAt'] = 'updated_at'
     mappings['createdAtEpoch'] = lambda x: utils.create_epoch(x.created_at)
     mappings['name'] = 'name'
-    mappings['shareOnWM'] = \
-        lambda x: True if lookup_wm_integration[x.id] else False
+    mappings['shareOnWM'] = lambda x: _wm_integration(x.id, source_db)
     """
     1 = Units
     2 = Grams (weight)
@@ -137,6 +128,9 @@ def transform(mmj_menu_items, mmj_categories, prices,
             'strain_id': item['strain_id'],
             'category_id': item['category_id']
         }
+        if item['shareOnWM'] is None:
+            item['shareOnWM'] = False
+
         for price in etl.dicts(breakpoint_pricing):
             item['weightPricing'] = {
                'price_half_gram': price['price_half_gram'],
@@ -167,6 +161,23 @@ def transform(mmj_menu_items, mmj_categories, prices,
         print(result)
 
     return items
+
+
+def _wm_integration(id, source_db):
+    """
+    If menu_item_id exists in menu_item_weedmaps_integrations then 
+    shareOnWm is true.
+    """
+    sql = ("SELECT DISTINCT menu_item_id id "
+           "FROM menu_item_weedmaps_integrations "
+           "WHERE menu_item_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql) 
+    exists = etl.lookup(data, 'id')
+
+    if exists[id][0] is not None:
+        return True
+    return False
 
 
 def map_uom(category_id, categories):
