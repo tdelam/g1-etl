@@ -94,6 +94,8 @@ def transform(source_data, organization_id, debug):
             'number': item['phone'],
             'default': True
         }]
+        
+        item['specialty'] = 'General'
 
         if item['licenceNumber'] is None or item['verificationWebsite'] \
             is None or item['email'] is None:
