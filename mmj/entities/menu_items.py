@@ -10,7 +10,7 @@ import json
 from petl.io.db import DbView
 from petl.io.json import DictsView
 from petl.transform.basics import CutView
-
+from copy import copy
 from collections import OrderedDict
 from pattern.text.en import singularize
 
@@ -77,6 +77,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
         etl
         .addfield(menu_items, 'createdAtEpoch')
         .addfield('unitOfMeasure')
+        .addfield('locationProductDetails')
         .addfield('keys')
     )
 
@@ -103,8 +104,6 @@ def transform(mmj_menu_items, mmj_categories, prices,
     mappings['unitOfMeasure'] = \
         lambda x: _map_uom(x.category_id, source_db)
 
-    mappings['active'] = lambda x: True if x.on_hold == 1 else False
-
     fields = etl.fieldmap(menu_items, mappings)
     data = etl.merge(menu_items, fields, key='id')
 
@@ -128,11 +127,17 @@ def transform(mmj_menu_items, mmj_categories, prices,
             'strain_id': item['strain_id'],
             'category_id': item['category_id']
         }
+
+        item['locationProductDetails'] = {
+            'id': item['id'],
+            'active': _active(item['on_hold'])
+        }
+
         if item['shareOnWM'] is None:
             item['shareOnWM'] = False
 
         for price in etl.dicts(breakpoint_pricing):
-            item['weightPricing'] = {
+            item['locationProductDetails']['weightPricing'] = {
                'price_half_gram': price['price_half_gram'],
                'price_gram': price['price_gram'],
                'price_eighth': price['price_eighth'],
@@ -162,6 +167,19 @@ def transform(mmj_menu_items, mmj_categories, prices,
 
     return items
 
+
+def _multidict(*args):
+    x = dict()
+    if args:
+        for k in args[0]:
+            x[k] = _multidict(*args[1:])
+    return x
+
+
+def _active(on_hold):
+    if on_hold == 1:
+        return True
+    return False
 
 def _wm_integration(id, source_db):
     """
@@ -201,6 +219,7 @@ def _map_uom(category_id, source_db):
     if measurement[category_id][0] == 1:
         return 2
     return 1
+
 
 def _map_categories(category_id, sativa, indica, data, menu_items):
     """

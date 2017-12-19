@@ -45,7 +45,7 @@ def transform(source_data, organization_id, debug):
     """
     # source data table
     source_dt = utils.view_to_list(source_data)
-    cut_data = ['id', 'dispensary_id']
+    cut_data = ['id', 'dispensary_id', 'logo_file_name', 'inactivity_logout']
     settings_data = etl.cut(source_dt, cut_data)
     settings = (
         etl
@@ -55,6 +55,7 @@ def transform(source_data, organization_id, debug):
     mappings = OrderedDict()
     mappings['id'] = 'id'
     mappings['dispensary_id'] = 'dispensary_id'
+    mappings['logo_file_name'] = 'logo_file_name'
 
     # field renames
     mappings['organizationId'] = organization_id
@@ -68,6 +69,8 @@ def transform(source_data, organization_id, debug):
             'dispensary_id': item['dispensary_id'],
             'id': item['id']
         }
+        if item['logo_file_name'] is None:
+            del item['logo_file_name']
 
         # delete fk's
         del item['id']
