@@ -51,7 +51,8 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
     dispensary_cut_data = ['id', 'dispensary_id', 'menu_show_tax',
                            'logo_file_name', 'inactivity_logout',
                            'calculate_even_totals',
-                           'default_customer_license_type']
+                           'default_customer_license_type',
+                           'require_customer_referrer']
 
     dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
     settings = (
@@ -78,7 +79,9 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
             'menu_show_tax': 'enableTaxesIn',
             # <Location> -> Sales -> PRICE ROUNDING
             'calculate_even_totals': 'hasPriceRounding',
-            'default_customer_license_type': 'memberType'
+            'default_customer_license_type': 'memberType',
+            # <Location> -> Members -> REFERRER REQUIRED
+            'require_customer_referrer': 'mandatoryReferral'
         })
     )
     settings = []
@@ -100,6 +103,8 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
 
         item['enableTaxesIn'] = utils.true_or_false(item['enableTaxesIn'])
         item['hasPriceRounding'] = utils.true_or_false(item['hasPriceRounding'])
+        item['mandatoryReferral'] = \
+            utils.true_or_false(item['mandatoryReferral'])
 
         if item['image'] is None:
             del item['image']
