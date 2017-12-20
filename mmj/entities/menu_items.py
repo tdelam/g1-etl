@@ -52,7 +52,7 @@ def extract(organization_id, debug):
         source_db.close()
 
 
-def transform(mmj_menu_items, mmj_categories, prices, 
+def transform(mmj_menu_items, mmj_categories, prices,
               organization_id, source_db, debug):
     """
     Transform data

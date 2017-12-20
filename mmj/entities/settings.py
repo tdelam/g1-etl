@@ -50,7 +50,8 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
     general_settings = utils.view_to_list(dispensary_details)
     dispensary_cut_data = ['id', 'dispensary_id', 'menu_show_tax',
                            'logo_file_name', 'inactivity_logout',
-                           'calculate_even_totals']
+                           'calculate_even_totals',
+                           'default_customer_license_type']
 
     dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
     settings = (
@@ -77,6 +78,7 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
             'menu_show_tax': 'enableTaxesIn',
             # <Location> -> Sales -> PRICE ROUNDING
             'calculate_even_totals': 'hasPriceRounding',
+            'default_customer_license_type': 'memberType'
         })
     )
     settings = []
@@ -86,6 +88,8 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
             'id': item['id']
         }
 
+        item['memberType'] = _member_type(item['memberType'])
+
         # sales.settings.taxes
         for tax in _get_taxes(item['dispensary_id'], source_db):
             item['taxes'] = {
@@ -94,8 +98,8 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
                 'type': 'sales'
             }
 
-        item['enableTaxesIn'] = _true_false(item['enableTaxesIn'])
-        item['hasPriceRounding'] = _true_false(item['hasPriceRounding'])
+        item['enableTaxesIn'] = utils.true_or_false(item['enableTaxesIn'])
+        item['hasPriceRounding'] = utils.true_or_false(item['hasPriceRounding'])
 
         if item['image'] is None:
             del item['image']
@@ -131,10 +135,13 @@ def _get_taxes(id, source_db):
         return 0
 
 
-def _true_false(value):
-    if value == 0:
-        return False
-    return True
+def _member_type(type):
+    """
+    Convert memberType mapping to string format for G1
+    """
+    if type == 1:
+        return 'MEDICAL'
+    return 'RECREATIONAL'
 
 
 if __name__ == '__main__':
