@@ -23,7 +23,7 @@ def load_db_data(db, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 10".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} LIMIT 30".format(table_name))
 
 
 def view_to_list(data):

@@ -52,7 +52,12 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
                            'logo_file_name', 'inactivity_logout',
                            'calculate_even_totals',
                            'default_customer_license_type',
-                           'require_customer_referrer']
+                           'require_customer_referrer',
+                           'membership_fee_enabled',
+                           'pp_enabled',
+                           'pp_global_dollars_to_points',
+                           'pp_global_points_to_dollars',
+                           'pp_points_per_referral', 'allow_unpaid_visits']
 
     dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
     settings = (
@@ -72,7 +77,7 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
         .merge(settings, settings_fields, key='id')
         .rename({
             # Global -> General -> SESSION TIMEOUT DURATION
-            'inactivity_logout': 'sessionTimeourDuration',
+            'inactivity_logout': 'sessionTimeoutDuration',
             # Global -> Logo
             'logo_file_name': 'image',
             # <Location> -> Sales -> TAXES IN
@@ -81,7 +86,14 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
             'calculate_even_totals': 'hasPriceRounding',
             'default_customer_license_type': 'memberType',
             # <Location> -> Members -> REFERRER REQUIRED
-            'require_customer_referrer': 'mandatoryReferral'
+            'require_customer_referrer': 'mandatoryReferral',
+            # Global -> Members -> Membership Level
+            'membership_fee_enabled': 'membershipLevelsEnabled',
+            'pp_global_dollars_to_points': 'dollarsPerPoint',
+            'pp_global_points_to_dollars': 'pointsPerDollar',
+            'pp_points_per_referral': 'referralPoints',
+            # <Location> -> Members -> PAID VISITS
+            'allow_unpaid_visits': 'paidVisitsEnabled'
         })
     )
     settings = []
@@ -105,6 +117,18 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
         item['hasPriceRounding'] = utils.true_or_false(item['hasPriceRounding'])
         item['mandatoryReferral'] = \
             utils.true_or_false(item['mandatoryReferral'])
+        item['paidVisitsEnabled'] = \
+            utils.true_or_false(item['paidVisitsEnabled'])
+
+        if item['pp_enabled']:
+            item['membershipLevel'] = {
+                'membershipLevelsEnabled': \
+                    utils.true_or_false(item['membershipLevelsEnabled']),
+                'levelName': 'Unnamed',
+                'dollarsPerPoint': item['dollarsPerPoint'],
+                'pointsPerDollar': item['pointsPerDollar'],
+                'referralPoints': item['referralPoints']
+            }
 
         if item['image'] is None:
             del item['image']
@@ -112,6 +136,7 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
         # delete fk's
         del item['id']
         del item['dispensary_id']
+        del item['membershipLevelsEnabled']
 
         # set up final structure for API
         settings.append(item)
