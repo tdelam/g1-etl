@@ -62,12 +62,11 @@ def transform(mmj_menu_items, mmj_categories, prices,
 
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
-                     'name', 'sativa', 'indica', 'on_hold']
+                     'name', 'sativa', 'indica', 'on_hold', 'product_type']
 
     cut_prices = ['menu_item_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
-
 
     # Cut out all the fields we don't need to load
     menu_items = etl.cut(source_dt, cut_menu_data)
@@ -79,6 +78,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
         .addfield('unitOfMeasure')
         .addfield('locationProductDetails')
         .addfield('keys')
+        .addfield('restockLevel')
     )
 
     # Two-step transform and cut. First we need to cut the name
@@ -133,6 +133,9 @@ def transform(mmj_menu_items, mmj_categories, prices,
             'active': _active(item['on_hold'])
         }
 
+        item['restockLevel'] = _restock_level(item['dispensary_id'],
+                                              item['product_type'], source_db)
+
         if item['shareOnWM'] is None:
             item['shareOnWM'] = False
 
@@ -157,6 +160,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
         del item['category_id']
         del item['updated_at']
         del item['created_at']
+        del item['product_type']
         # set up final structure for API
         items.append(item)
 
@@ -168,18 +172,33 @@ def transform(mmj_menu_items, mmj_categories, prices,
     return items
 
 
-def _multidict(*args):
-    x = dict()
-    if args:
-        for k in args[0]:
-            x[k] = _multidict(*args[1:])
-    return x
-
-
 def _active(on_hold):
+    """
+    Sets the active bit on items
+    """
     if on_hold == 1:
         return True
     return False
+
+
+def _restock_level(id, product_type, source_db):
+    """
+    Since G1 does not have a global setting for low inventory settings,
+    we will need to populate all products with the MMJ inventory settings.
+    """
+    sql = ("SELECT dispensary_id, grams_hold_at, units_hold_at "
+           "FROM dispensary_details "
+           "WHERE dispensary_id={0}").format(id)
+    data = etl.fromdb(source_db, sql)
+
+    restock = []
+    if product_type == 1:
+        level = etl.lookup(data, 'dispensary_id', 'grams_hold_at')
+    else:
+        level = etl.lookup(data, 'dispensary_id', 'units_hold_at')
+    return level[id][0]
+        
+
 
 def _wm_integration(id, source_db):
     """
