@@ -33,44 +33,72 @@ def extract(organization_id, debug):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        source_data = utils.load_db_data(source_db, 'dispensary_details')
-        return transform(source_data, organization_id, debug)
+        dispensary_details = utils.load_db_data(source_db,
+                                                'dispensary_details')
+        taxes = utils.load_db_data(source_db, 'taxes')
+        return transform(dispensary_details, taxes,organization_id, debug,
+                         source_db)
     finally:
         source_db.close()
 
 
-def transform(source_data, organization_id, debug):
+def transform(dispensary_details, taxes, organization_id, debug, source_db):
     """
     Load the transformed data into the destination(s)
     """
     # source data table
-    source_dt = utils.view_to_list(source_data)
-    cut_data = ['id', 'dispensary_id', 'logo_file_name', 'inactivity_logout']
-    settings_data = etl.cut(source_dt, cut_data)
+    general_settings = utils.view_to_list(dispensary_details)
+    dispensary_cut_data = ['id', 'dispensary_id', 'menu_show_tax',
+                           'logo_file_name', 'inactivity_logout',
+                           'calculate_even_totals']
+
+    dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
     settings = (
         etl
-        .addfield(settings_data, 'organizationId')
+        .addfield(dispensary_settings_data, 'organizationId')
     )
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
-    mappings['dispensary_id'] = 'dispensary_id'
-    mappings['logo_file_name'] = 'logo_file_name'
 
     # field renames
     mappings['organizationId'] = organization_id
 
     settings_fields = etl.fieldmap(settings, mappings)
-    merged_settings = etl.merge(settings, settings_fields, key='id')
-
+    merged_settings = (
+        etl
+        .merge(settings, settings_fields, key='id')
+        .rename({
+            # Global -> General -> SESSION TIMEOUT DURATION
+            'inactivity_logout': 'sessionTimeourDuration',
+            # Global -> Logo
+            'logo_file_name': 'image',
+            # <Location> -> Sales -> TAXES IN
+            'menu_show_tax': 'enableTaxesIn',
+            # <Location> -> Sales -> PRICE ROUNDING
+            'calculate_even_totals': 'hasPriceRounding',
+        })
+    )
     settings = []
     for item in etl.dicts(merged_settings):
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id']
         }
-        if item['logo_file_name'] is None:
-            del item['logo_file_name']
+
+        # sales.settings.taxes
+        for tax in _get_taxes(item['dispensary_id'], source_db):
+            item['taxes'] = {
+                'code': tax['name'],
+                'percent': tax['amount'],
+                'type': 'sales'
+            }
+
+        item['enableTaxesIn'] = _true_false(item['enableTaxesIn'])
+        item['hasPriceRounding'] = _true_false(item['hasPriceRounding'])
+
+        if item['image'] is None:
+            del item['image']
 
         # delete fk's
         del item['id']
@@ -85,6 +113,28 @@ def transform(source_data, organization_id, debug):
         print(result)
 
     return settings
+
+
+def _get_taxes(id, source_db):
+    """
+    get the dispensary taxes settings for each dispensary_id
+    """
+    sql = ("SELECT DISTINCT dispensary_id, amount, name "
+           "FROM taxes "
+           "WHERE dispensary_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql) 
+    try:
+        lookup_taxes = etl.select(data, lambda rec: rec.dispensary_id==id)
+        return etl.dicts(lookup_taxes)
+    except KeyError:
+        return 0
+
+
+def _true_false(value):
+    if value == 0:
+        return False
+    return True
 
 
 if __name__ == '__main__':
