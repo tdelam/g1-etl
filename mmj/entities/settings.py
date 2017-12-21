@@ -35,14 +35,13 @@ def extract(organization_id, debug):
     try:
         dispensary_details = utils.load_db_data(source_db,
                                                 'dispensary_details')
-        taxes = utils.load_db_data(source_db, 'taxes')
-        return transform(dispensary_details, taxes,organization_id, debug,
+        return transform(dispensary_details, organization_id, debug,
                          source_db)
     finally:
         source_db.close()
 
 
-def transform(dispensary_details, taxes, organization_id, debug, source_db):
+def transform(dispensary_details, organization_id, debug, source_db):
     """
     Load the transformed data into the destination(s)
     """
@@ -113,6 +112,13 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
                 'type': 'sales'
             }
 
+        # inventory.categories
+        for category in _get_categories(item['dispensary_id'], source_db):
+            item['categories'] = {
+                'name': category['name'],
+                'tax_free': False
+            }
+
         item['enableTaxesIn'] = utils.true_or_false(item['enableTaxesIn'])
         item['hasPriceRounding'] = utils.true_or_false(item['hasPriceRounding'])
         item['mandatoryReferral'] = \
@@ -129,6 +135,7 @@ def transform(dispensary_details, taxes, organization_id, debug, source_db):
                 'pointsPerDollar': item['pointsPerDollar'],
                 'referralPoints': item['referralPoints']
             }
+
 
         if item['image'] is None:
             del item['image']
@@ -163,6 +170,22 @@ def _get_taxes(id, source_db):
         return etl.dicts(lookup_taxes)
     except KeyError:
         return 0
+
+
+def _get_categories(id, source_db):
+    """
+    get the categories for each dispensary_id
+    """
+    sql = ("SELECT dispensary_id, name "
+           "FROM categories "
+           "WHERE dispensary_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql) 
+    try:
+        categories = etl.select(data, lambda rec: rec.dispensary_id==id)
+        return etl.dicts(categories)
+    except KeyError:
+        return None
 
 
 def _member_type(type):
