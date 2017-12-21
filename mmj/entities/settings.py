@@ -8,6 +8,7 @@ import petl as etl
 import json
 
 from collections import OrderedDict
+from datetime import timedelta
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))
@@ -20,6 +21,8 @@ from utilities import utils
 # handle characters outside of ascii
 reload(sys)
 sys.setdefaultencoding('latin-1')
+
+UNITS = {"s":"seconds", "m":"minutes", "h":"hours", "d":"days", "w":"weeks"}
 
 
 def extract(organization_id, debug):
@@ -56,7 +59,8 @@ def transform(dispensary_details, organization_id, debug, source_db):
                            'pp_enabled',
                            'pp_global_dollars_to_points',
                            'pp_global_points_to_dollars',
-                           'pp_points_per_referral', 'allow_unpaid_visits']
+                           'pp_points_per_referral', 'allow_unpaid_visits',
+                           'red_flags_enabled']
 
     dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
     settings = (
@@ -92,7 +96,9 @@ def transform(dispensary_details, organization_id, debug, source_db):
             'pp_global_points_to_dollars': 'pointsPerDollar',
             'pp_points_per_referral': 'referralPoints',
             # <Location> -> Members -> PAID VISITS
-            'allow_unpaid_visits': 'paidVisitsEnabled'
+            'allow_unpaid_visits': 'paidVisitsEnabled',
+            # <Location> -> Members -> MEDICAL MEMBERS
+            'red_flags_enabled': 'hasLimits'
         })
     )
     settings = []
@@ -136,6 +142,18 @@ def transform(dispensary_details, organization_id, debug, source_db):
                 'referralPoints': item['referralPoints']
             }
 
+        # monthly purchase limit is two week limit x2
+        if item['hasLimits'] == 1:
+            for limits in _medical_limits(item['dispensary_id'], source_db):
+                item['memberLimits'] = {
+                    'hasLimits': True,
+                    'dailyPurchaseLimit': limits['daily_purchase_limit'],
+                    'visitPurchaseLimit': limits['visit_purchase_limit'],
+                    'dailyVisitLimit': limits['daily_visit_limit'],
+                    'monthlyPurchaseLimit': \
+                        int(limits['two_week_purchase_limit'] * 2)
+                }
+
 
         if item['image'] is None:
             del item['image']
@@ -154,6 +172,20 @@ def transform(dispensary_details, organization_id, debug, source_db):
         print(result)
 
     return settings
+
+
+def _medical_limits(id, source_db):
+    """
+    get the member limits
+    """
+    sql = ("SELECT dispensary_id, daily_purchase_limit, visit_purchase_limit, "
+           "daily_visit_limit, two_week_purchase_limit "
+           "FROM red_flags "
+           "WHERE dispensary_id={0}").format(id)
+
+    data = etl.fromdb(source_db, sql) 
+    limits = etl.select(data, lambda rec: rec.dispensary_id==id)
+    return etl.dicts(limits)
 
 
 def _get_taxes(id, source_db):
