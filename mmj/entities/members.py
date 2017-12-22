@@ -113,6 +113,12 @@ def transform(source_data, organization_id, debug):
             'picture_file_name': item['picture_file_name'],
             'organization_id': item['organization_id'],
         }
+
+        # remove any item['keys'] tuples with None values
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
+
         # set up final structure for API
         item['identificationType'] = 'Drivers License'
 

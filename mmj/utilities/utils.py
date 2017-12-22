@@ -162,4 +162,7 @@ def account_status(status):
 
 
 def create_epoch(dt):
+    """
+    Returns epoch date/time
+    """
     return int(dt.strftime('%s'))

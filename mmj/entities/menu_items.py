@@ -128,6 +128,10 @@ def transform(mmj_menu_items, mmj_categories, prices,
             'category_id': item['category_id']
         }
 
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
+
         item['locationProductDetails'] = {
             'id': item['id'],
             'active': _active(item['on_hold'])

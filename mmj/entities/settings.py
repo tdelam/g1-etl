@@ -117,6 +117,11 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'id': item['id']
         }
 
+        # remove any item['keys'] tuples with None values
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
+
         item['memberType'] = _member_type(item['memberType'])
 
         # sales.settings.taxes
