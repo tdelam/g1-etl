@@ -123,7 +123,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
             url = ("https://wm-mmjmenu-images-development.s3."
                    "amazonaws.com/menu_items/images/{0}/large/"
                    "{1}").format(item['id'], item['image_file_name'])
-        else:
+        elif item['image_file_name'] is not None:
             url = ("https://wm-mmjmenu-images-production.s3."
                    "amazonaws.com/menu_items/images/{0}/large/"
                    "{1}").format(item['id'], item['image_file_name'])

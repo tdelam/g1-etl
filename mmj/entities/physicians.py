@@ -76,6 +76,7 @@ def transform(source_data, organization_id, debug):
 
     physicians = []
     for item in etl.dicts(physician_fields):
+        #import pdb; pdb.set_trace()
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id']
