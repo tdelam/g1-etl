@@ -62,7 +62,8 @@ def transform(mmj_menu_items, mmj_categories, prices,
 
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
-                     'name', 'sativa', 'indica', 'on_hold', 'product_type']
+                     'name', 'sativa', 'indica', 'on_hold', 'product_type',
+                     'image_file_name']
 
     cut_prices = ['menu_item_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
@@ -116,6 +117,19 @@ def transform(mmj_menu_items, mmj_categories, prices,
             .cutout('menu_item_id')
         )
 
+        # Set image url for load to download
+        url = None
+        if debug and item['image_file_name'] is not None:
+            url = ("https://wm-mmjmenu-images-development.s3."
+                   "amazonaws.com/menu_items/images/{0}/large/"
+                   "{1}").format(item['id'], item['image_file_name'])
+        else:
+            url = ("https://wm-mmjmenu-images-production.s3."
+                   "amazonaws.com/menu_items/images/{0}/large/"
+                   "{1}").format(item['id'], item['image_file_name'])
+
+        item['image_file_name'] = url
+
         item['categoryId'] = _map_categories(item['category_id'],
                                             item['sativa'], item['indica'],
                                             mmj_categories, menu_items)
@@ -165,6 +179,10 @@ def transform(mmj_menu_items, mmj_categories, prices,
         del item['updated_at']
         del item['created_at']
         del item['product_type']
+
+        if item['image_file_name'] is None:
+            del item['image_file_name']
+
         # set up final structure for API
         items.append(item)
 
