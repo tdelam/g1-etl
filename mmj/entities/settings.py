@@ -149,11 +149,13 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             }
 
         # inventory.categories
+        item['categories'] = []
         for category in _get_categories(item['dispensary_id'], source_db):
-            item['categories'] = {
+            data = {
                 'name': category['name'],
                 'tax_free': False
             }
+            item['categories'].append(data)
 
         """
         Member settings nested.
@@ -211,6 +213,12 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         del item['hasLimits']
         del item['hasPriceRounding']
         del item['dollarsPerPoint']
+        del item['mandatoryReferral']
+        del item['memberType']
+        del item['paidVisitsEnabled']
+        del item['pointsPerDollar']
+        del item['pp_enabled']
+        del item['referralPoints']
 
         # set up final structure for API
         settings.append(item)
