@@ -150,4 +150,4 @@ def transform(source_data, organization_id, debug):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], sys.argv[2],True)
+    extract(sys.argv[1], sys.argv[2], True)

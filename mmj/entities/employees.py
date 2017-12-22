@@ -9,6 +9,7 @@ import json
 import datetime 
 
 from collections import OrderedDict
+from faker import Faker
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))
@@ -23,7 +24,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(dispensary_id, organization_id, debug):
+def extract(dispensary_id, organization_id, debug, fake_email):
     """
     Grab all data from source(s).
     """
@@ -37,13 +38,13 @@ def extract(dispensary_id, organization_id, debug):
         mmj_employees = utils.load_employees(source_db, dispensary_id)
 
         return transform(mmj_employees,
-                         organization_id, debug, source_db)
+                         organization_id, debug, fake_email, source_db)
 
     finally:
         source_db.close()
 
 
-def transform(mmj_employees, organization_id, debug, source_db):
+def transform(mmj_employees, organization_id, debug, fake_email, source_db):
     """
     Load the transformed data into the destination(s)
     """
@@ -64,7 +65,6 @@ def transform(mmj_employees, organization_id, debug, source_db):
 
     mappings = OrderedDict()
     mappings['id'] = 'id'
-    mappings['email'] = 'email'
     mappings['name'] = \
         lambda name: _set_name(name.first_name, name.last_name, name.login)
 
@@ -95,6 +95,8 @@ def transform(mmj_employees, organization_id, debug, source_db):
             'organization_id': item['organization_id']
         }
 
+        item['email'] = _set_email(item['email'], fake_email, debug)
+
         del item['login']
         del item['first_name']
         del item['last_name']
@@ -121,6 +123,14 @@ def _set_name(first_name, last_name, login):
         return "{0}".format(login)
     else:
         return "{0} {1}".format(first_name, last_name)
+
+
+def _set_email(user_email, fake_email, debug):
+    if fake_email is True and debug is True:
+        fake = Faker()
+        return fake.safe_email()
+    else:
+        return user_email
 
 
 def _active(id, source_db):
@@ -169,4 +179,8 @@ def _assign_role(id, source_db):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], sys.argv[2], True)
+    """
+    !! WARNING !!
+    MAKE SURE YOU DO NOT SET THE ARGS TO FALSE IN DEVELOPMENT MODE!!!
+    """
+    extract(sys.argv[1], sys.argv[2], True, True)
