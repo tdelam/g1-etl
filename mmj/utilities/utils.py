@@ -19,11 +19,16 @@ logging.basicConfig(filename="g1-etl-utils.log", level=logging.INFO)
 log = logging.getLogger("g1-etl-utils")
 
 
-def load_db_data(db, table_name):
+def load_db_data(db, dispensary_id, table_name):
     """
     Data extracted from source db
     """
-    return etl.fromdb(db, "SELECT * from {0} LIMIT 30".format(table_name))
+    return etl.fromdb(db, "SELECT * from {0} WHERE dispensary_id={1}".format(table_name, dispensary_id))
+
+
+def load_employees(db, dispensary_id):
+    sql = "SELECT u.* FROM dispensary_users as du INNER JOIN users as u WHERE u.id = du.user_id AND du.dispensary_id = {0}".format(dispensary_id)
+    return etl.fromdb(db, sql)
 
 
 def view_to_list(data):

@@ -30,7 +30,7 @@ sys.setdefaultencoding('latin-1')
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
 
 
-def extract(organization_id, debug):
+def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -41,9 +41,9 @@ def extract(organization_id, debug):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        mmj_menu_items = utils.load_db_data(source_db, 'menu_items')
-        mmj_categories = utils.load_db_data(source_db, 'categories')
-        prices = utils.load_db_data(source_db, 'menu_item_prices')
+        mmj_menu_items = utils.load_db_data(source_db, dispensary_id, 'menu_items')
+        mmj_categories = utils.load_db_data(source_db, dispensary_id, 'categories')
+        prices = utils.load_db_data(source_db, dispensary_id, 'menu_item_prices')
 
         return transform(mmj_menu_items, mmj_categories, prices,
                          organization_id, source_db, debug)
@@ -280,4 +280,4 @@ def lab_results(data):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], True)
+    extract(sys.argv[1], sys.argv[2], True)

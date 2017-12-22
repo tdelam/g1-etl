@@ -21,7 +21,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id, debug):
+def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -32,7 +32,7 @@ def extract(organization_id, debug):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        source_data = utils.load_db_data(source_db, 'physicians')
+        source_data = utils.load_db_data(source_db, dispensary_id, 'physicians')
         return transform(source_data, organization_id, debug)
 
     finally:
@@ -121,4 +121,4 @@ def transform(source_data, organization_id, debug):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], True)
+    extract(sys.argv[1], sys.argv[2], True)

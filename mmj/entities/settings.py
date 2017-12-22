@@ -22,10 +22,8 @@ from utilities import utils
 reload(sys)
 sys.setdefaultencoding('latin-1')
 
-UNITS = {"s":"seconds", "m":"minutes", "h":"hours", "d":"days", "w":"weeks"}
 
-
-def extract(organization_id, debug):
+def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -36,20 +34,24 @@ def extract(organization_id, debug):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        dispensary_details = utils.load_db_data(source_db,
+        dispensary_details = utils.load_db_data(source_db, dispensary_id,
                                                 'dispensary_details')
-        return transform(dispensary_details, organization_id, debug,
+
+        pricing = utils.load_db_data(source_db, 'membership_prices')
+        return transform(dispensary_details, pricing, organization_id, debug,
                          source_db)
     finally:
         source_db.close()
 
 
-def transform(dispensary_details, organization_id, debug, source_db):
+def transform(dispensary_details, pricing, organization_id, debug, source_db):
     """
     Load the transformed data into the destination(s)
     """
     # source data table
     general_settings = utils.view_to_list(dispensary_details)
+    pricing_detail = utils.view_to_list(pricing)
+
     dispensary_cut_data = ['id', 'dispensary_id', 'menu_show_tax',
                            'logo_file_name', 'inactivity_logout',
                            'calculate_even_totals',
@@ -62,7 +64,13 @@ def transform(dispensary_details, organization_id, debug, source_db):
                            'pp_points_per_referral', 'allow_unpaid_visits',
                            'red_flags_enabled']
 
+    pricing_cut_data = ['id', 'price_half_gram', 'price_gram',
+                        'price_two_gram', 'price_eigth', 'price_quarter',
+                        'price_half', 'price_ounce']
+
     dispensary_settings_data = etl.cut(general_settings, dispensary_cut_data)
+    pricing_data = etl.cut(pricing_detail, pricing_cut_data)
+
     settings = (
         etl
         .addfield(dispensary_settings_data, 'organizationId')
@@ -116,6 +124,20 @@ def transform(dispensary_details, organization_id, debug, source_db):
                 'code': tax['name'],
                 'percent': tax['amount'],
                 'type': 'sales'
+            }
+
+        for pricing in etl.dicts(pricing_data):
+            item['weightPricing'] = {
+                'name': 'Default',
+                'defaultTier': True
+            }
+            item['weightPricing']['breakpoints'] = {
+                'price_half_gram': pricing['price_half_gram'],
+                'price_gram': pricing['price_gram'],
+                'price_eighth': pricing['price_eigth'],
+                'price_quarter': pricing['price_quarter'],
+                'price_half': pricing['price_half'],
+                'price_ounce': pricing['price_ounce'],
             }
 
         # inventory.categories
@@ -230,4 +252,4 @@ def _member_type(type):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], True)
+    extract(sys.argv[1], sys.argv[2], True)

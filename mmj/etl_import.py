@@ -5,12 +5,12 @@ import time
 from utilities import utils
 from entities import employees, members, menu_items, physicians, vendors
 
-def extract(organization_id):
-    employees_extract = employees.extract(organization_id, False)
-    members_extract = members.extract(organization_id, False)
-    menu_items_extract = menu_items.extract(organization_id, False)
-    vendors_extract = vendors.extract(organization_id, False)
-    physicians_extract = physicians.extract(organization_id, False)
+def extract(dispensary_id, organization_id):
+    #employees_extract = employees.extract(dispensary_id, organization_id, False)
+    members_extract = members.extract(dispensary_id, organization_id, False)
+    menu_items_extract = menu_items.extract(dispensary_id, organization_id, False)
+    vendors_extract = vendors.extract(dispensary_id, organization_id, False)
+    physicians_extract = physicians.extract(dispensary_id, organization_id, False)
 
     # do some magic to pickle all of the extracts into
     # a single json structure that can be persisted into
@@ -18,7 +18,7 @@ def extract(organization_id):
 
     payload = {
         'organizationId': str(organization_id),
-        'employees': employees_extract,
+        #'employees': employees_extract,
         'members': members_extract,
         'products': menu_items_extract,
         'vendors': vendors_extract,
@@ -43,10 +43,10 @@ def extract(organization_id):
                 'validated': 0,
                 'errors': []
             },
-            'employees': {
-                'validated': 0,
-                'errors': []
-            }
+            # 'employees': {
+            #     'validated': 0,
+            #     'errors': []
+            # }
         }
     }
     result = json.dumps(payload, sort_keys=True,
@@ -64,4 +64,4 @@ def extract(organization_id):
     return result;
 
 if __name__ == '__main__':
-    extract(sys.argv[1])
+    extract(sys.argv[1], sys.argv[2])

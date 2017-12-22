@@ -23,7 +23,7 @@ reload(sys)
 sys.setdefaultencoding('latin-1')
 
 
-def extract(organization_id, debug):
+def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
@@ -34,7 +34,7 @@ def extract(organization_id, debug):
                                 passwd="V@e67dYBqcH^U7qVwqPS",
                                 db="mmjmenu_production")
     try:
-        mmj_employees = utils.load_db_data(source_db, 'users')
+        mmj_employees = utils.load_employees(source_db, dispensary_id)
 
         return transform(mmj_employees,
                          organization_id, debug, source_db)
@@ -169,4 +169,4 @@ def _assign_role(id, source_db):
 
 
 if __name__ == '__main__':
-    extract(sys.argv[1], True)
+    extract(sys.argv[1], sys.argv[2], True)
