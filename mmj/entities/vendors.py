@@ -89,6 +89,11 @@ def transform(source_data, organization_id, debug):
             'mmjvenu_id': item['mmjvenu_id']
         }
 
+        # remove any item['keys'] tuples with None values
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
+
         # mutate dict and remove fields that are mapped and no longer required
         del item['zip']
         del item['state']

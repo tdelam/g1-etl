@@ -81,6 +81,11 @@ def transform(source_data, organization_id, debug):
             'id': item['id']
         }
 
+        # remove any item['keys'] tuples with None values
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
+
         item['address'] = [{
             'line1': item['address'],
             'city': item['city'],

@@ -94,6 +94,11 @@ def transform(mmj_employees, organization_id, debug, fake_email, source_db):
             'id': item['id'],
             'organization_id': item['organization_id']
         }
+        
+        # remove any item['keys'] tuples with None values
+        for key in item['keys'].keys():
+            if not item['keys'][key]:
+                del item['keys'][key]
 
         item['email'] = _set_email(item['email'], fake_email, debug)
 
