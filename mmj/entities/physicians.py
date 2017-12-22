@@ -6,6 +6,7 @@ import inspect
 import MySQLdb
 import petl as etl
 import json
+import re
 
 from collections import OrderedDict
 
@@ -76,7 +77,6 @@ def transform(source_data, organization_id, debug):
 
     physicians = []
     for item in etl.dicts(physician_fields):
-        #import pdb; pdb.set_trace()
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
             'id': item['id']
@@ -94,6 +94,11 @@ def transform(source_data, organization_id, debug):
             'zip': item['zip_code'],
             'country': item['country'],
         }]
+
+        name = re.sub(r'^(Dr(?:.)?s|(?:Dr.?))', '', item['name'], 
+                      flags=re.IGNORECASE)
+
+        item['name'] = name.strip()
 
         item['phone'] = [{
             'name': 'work',
@@ -124,7 +129,7 @@ def transform(source_data, organization_id, debug):
         print(result)
 
     return physicians
-
+    
 
 if __name__ == '__main__':
     extract(sys.argv[1], sys.argv[2], True)
