@@ -37,6 +37,13 @@ def load_employees(db, dispensary_id):
     return etl.fromdb(db, sql)
 
 
+def load_membership_prices(db, dispensary_id):
+    sql = ("SELECT mp.* FROM memberships as m INNER JOIN membership_prices "
+           "as mp WHERE mp.membership_id = m.id AND "
+           "m.dispensary_id = {0} ORDER BY id DESC").format(dispensary_id)
+    
+    return etl.fromdb(db, sql)
+
 def view_to_list(data):
     if type(data) is DbView or type(data) is CutView:
         # convert the view to a lists of lists for petl

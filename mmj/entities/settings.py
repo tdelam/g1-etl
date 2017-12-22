@@ -37,7 +37,8 @@ def extract(dispensary_id, organization_id, debug):
         dispensary_details = utils.load_db_data(source_db, dispensary_id,
                                                 'dispensary_details')
 
-        pricing = utils.load_db_data(source_db, 'membership_prices')
+        pricing = utils.load_membership_prices(source_db, dispensary_id)
+
         return transform(dispensary_details, pricing, organization_id, debug,
                          source_db)
     finally:
