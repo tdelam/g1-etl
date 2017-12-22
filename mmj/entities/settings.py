@@ -92,6 +92,12 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'inactivity_logout': 'sessionTimeoutDuration',
             # Global -> Logo
             'logo_file_name': 'image',
+            # Global -> Members -> Membership Level
+            'membership_fee_enabled': 'membershipLevelsEnabled',
+            'pp_global_dollars_to_points': 'dollarsPerPoint',
+            'pp_global_points_to_dollars': 'pointsPerDollar',
+            'pp_points_per_referral': 'referralPoints',
+            
             # <Location> -> Sales -> TAXES IN
             'menu_show_tax': 'enableTaxesIn',
             # <Location> -> Sales -> PRICE ROUNDING
@@ -99,11 +105,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'default_customer_license_type': 'memberType',
             # <Location> -> Members -> REFERRER REQUIRED
             'require_customer_referrer': 'mandatoryReferral',
-            # Global -> Members -> Membership Level
-            'membership_fee_enabled': 'membershipLevelsEnabled',
-            'pp_global_dollars_to_points': 'dollarsPerPoint',
-            'pp_global_points_to_dollars': 'pointsPerDollar',
-            'pp_points_per_referral': 'referralPoints',
             # <Location> -> Members -> PAID VISITS
             'allow_unpaid_visits': 'paidVisitsEnabled',
             # <Location> -> Members -> MEDICAL MEMBERS
@@ -124,7 +125,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             if not item['keys'][key]:
                 del item['keys'][key]
 
-        item['memberType'] = _member_type(item['memberType'])
 
         # sales.settings.taxes
         for tax in _get_taxes(item['dispensary_id'], source_db):
@@ -147,8 +147,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 'price_half': pricing['price_half'],
                 'price_ounce': pricing['price_ounce'],
             }
-        
-        item['apiKey'] = item['apiKey']
 
         # inventory.categories
         for category in _get_categories(item['dispensary_id'], source_db):
@@ -157,15 +155,11 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 'tax_free': False
             }
 
-        item['enableTaxesIn'] = utils.true_or_false(item['enableTaxesIn'])
-        item['hasPriceRounding'] = utils.true_or_false(item['hasPriceRounding'])
-        item['mandatoryReferral'] = \
-            utils.true_or_false(item['mandatoryReferral'])
-        item['paidVisitsEnabled'] = \
-            utils.true_or_false(item['paidVisitsEnabled'])
-
+        """
+        Member settings nested.
+        """
         if item['pp_enabled']:
-            item['membershipLevel'] = {
+            item['member_settings']['membershipLevel'] = {
                 'membershipLevelsEnabled': \
                     utils.true_or_false(item['membershipLevelsEnabled']),
                 'levelName': 'Unnamed',
@@ -174,10 +168,27 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 'referralPoints': item['referralPoints']
             }
 
+        """
+        Location ettings nested. 
+        """
+        item['location'] = {}
+        item['location']['members'] = {
+            'paidVisitsEnabled': utils.true_or_false(item['paidVisitsEnabled']),
+            'mandatoryReferral': utils.true_or_false(item['mandatoryReferral'])
+        }
+        item['location']['sales'] = {
+            'enableTaxesIn': utils.true_or_false(item['enableTaxesIn']),
+            'hasPriceRounding': utils.true_or_false(item['hasPriceRounding']),
+            'memberType': _member_type(item['memberType'])
+        }
+        item['location']['general'] = {
+            'apiKey': item['apiKey']
+        }
+
         # monthly purchase limit is two week limit x2
         if item['hasLimits'] == 1:
             for limits in _medical_limits(item['dispensary_id'], source_db):
-                item['memberLimits'] = {
+                item['location']['members']['memberLimits'] = {
                     'hasLimits': True,
                     'dailyPurchaseLimit': limits['daily_purchase_limit'],
                     'visitPurchaseLimit': limits['visit_purchase_limit'],
@@ -196,6 +207,10 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         del item['id']
         del item['dispensary_id']
         del item['membershipLevelsEnabled']
+        del item['enableTaxesIn']
+        del item['hasLimits']
+        del item['hasPriceRounding']
+        del item['dollarsPerPoint']
 
         # set up final structure for API
         settings.append(item)
