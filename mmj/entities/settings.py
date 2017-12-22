@@ -63,7 +63,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                            'pp_global_dollars_to_points',
                            'pp_global_points_to_dollars',
                            'pp_points_per_referral', 'allow_unpaid_visits',
-                           'red_flags_enabled']
+                           'red_flags_enabled', 'mmjrevu_api_key']
 
     pricing_cut_data = ['id', 'price_half_gram', 'price_gram',
                         'price_two_gram', 'price_eigth', 'price_quarter',
@@ -107,7 +107,9 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             # <Location> -> Members -> PAID VISITS
             'allow_unpaid_visits': 'paidVisitsEnabled',
             # <Location> -> Members -> MEDICAL MEMBERS
-            'red_flags_enabled': 'hasLimits'
+            'red_flags_enabled': 'hasLimits',
+            # <Location> -> General -> STORE LOCATIONS
+            'mmjrevu_api_key': 'apiKey'
         })
     )
     settings = []
@@ -145,6 +147,8 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 'price_half': pricing['price_half'],
                 'price_ounce': pricing['price_ounce'],
             }
+        
+        item['apiKey'] = item['apiKey']
 
         # inventory.categories
         for category in _get_categories(item['dispensary_id'], source_db):
@@ -183,8 +187,10 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 }
 
 
-        if item['image'] is None:
+        if item['image'] is None or item['apiKey'] is None:
             del item['image']
+            del item['apiKey']
+
 
         # delete fk's
         del item['id']
