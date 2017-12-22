@@ -6,7 +6,7 @@ from utilities import utils
 from entities import employees, members, menu_items, physicians, vendors
 
 def extract(dispensary_id, organization_id):
-    employees_extract = employees.extract(dispensary_id, organization_id, False)
+    employees_extract = employees.extract(dispensary_id, organization_id, False, True)
     members_extract = members.extract(dispensary_id, organization_id, False)
     menu_items_extract = menu_items.extract(dispensary_id, organization_id, False)
     vendors_extract = vendors.extract(dispensary_id, organization_id, False)
