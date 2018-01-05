@@ -1,5 +1,7 @@
 from __future__ import division, print_function, absolute_import
 
+import time
+
 import os
 import sys
 import inspect
@@ -129,6 +131,10 @@ def transform(source_data, organization_id, debug):
             'state': item['state'],
             'zip': item['zip_code'],
         }]
+
+        # replace None value dobs with the epoch beginning of time
+        if not item['dateOfBirth']:
+            item['dateOfBirth']=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(0))
 
         del item['address']
         del item['city']
