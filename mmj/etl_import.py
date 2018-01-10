@@ -3,9 +3,10 @@ import sys
 import time
 
 from utilities import utils
-from entities import employees, members, menu_items, physicians, vendors
+from entities import employees, members, menu_items, physicians, vendors, settings
 
 def extract(dispensary_id, organization_id):
+    settings_extract = settings.extract(dispensary_id, organization_id, False)
     employees_extract = employees.extract(dispensary_id, organization_id, False, True)
     members_extract = members.extract(dispensary_id, organization_id, False)
     menu_items_extract = menu_items.extract(dispensary_id, organization_id, False)
@@ -18,6 +19,7 @@ def extract(dispensary_id, organization_id):
 
     payload = {
         'organizationId': str(organization_id),
+        'settings': settings_extract,
         'employees': employees_extract,
         'members': members_extract,
         'products': menu_items_extract,
@@ -27,6 +29,10 @@ def extract(dispensary_id, organization_id):
         'imported': False,
         'extractedDate': int(time.time()),
         'summary': {
+            'settings': {
+                'validated': 0,
+                'errors': []
+            },
             'members': {
                 'validated': 0,
                 'errors': []
@@ -61,7 +67,7 @@ def extract(dispensary_id, organization_id):
 
     # the rest endpoint needs a formatted result here indicating success of the
     # extraction process
-    return result;
+    return result
 
 if __name__ == '__main__':
     extract(sys.argv[1], sys.argv[2])

@@ -125,29 +125,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             if not item['keys'][key]:
                 del item['keys'][key]
 
-
-        # sales.settings.taxes
-        for tax in _get_taxes(item['dispensary_id'], source_db):
-            item['taxes'] = {
-                'code': tax['name'],
-                'percent': tax['amount'],
-                'type': 'sales'
-            }
-
-        for pricing in etl.dicts(pricing_data):
-            item['weightPricing'] = {
-                'name': 'Default',
-                'defaultTier': True
-            }
-            item['weightPricing']['breakpoints'] = {
-                'price_half_gram': pricing['price_half_gram'],
-                'price_gram': pricing['price_gram'],
-                'price_eighth': pricing['price_eigth'],
-                'price_quarter': pricing['price_quarter'],
-                'price_half': pricing['price_half'],
-                'price_ounce': pricing['price_ounce'],
-            }
-
         # inventory.categories
         item['categories'] = []
         for category in _get_categories(item['dispensary_id'], source_db):
@@ -158,7 +135,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             item['categories'].append(data)
 
         """
-        Member settings nested.
+        Member settings nested - crm.member.settings
         """
         if item['pp_enabled']:
             item['member_settings']['membershipLevel'] = {
@@ -173,24 +150,48 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         """
         Location ettings nested. 
         """
-        item['location'] = {}
-        item['location']['members'] = {
+        item['location_specific'] = {}
+        item['location_specific']['members'] = {
             'paidVisitsEnabled': utils.true_or_false(item['paidVisitsEnabled']),
             'mandatoryReferral': utils.true_or_false(item['mandatoryReferral'])
         }
-        item['location']['sales'] = {
+        item['location_specific']['sales'] = {
             'enableTaxesIn': utils.true_or_false(item['enableTaxesIn']),
             'hasPriceRounding': utils.true_or_false(item['hasPriceRounding']),
             'memberType': _member_type(item['memberType'])
         }
-        item['location']['general'] = {
+        item['location_specific']['general'] = {
             'apiKey': item['apiKey']
         }
+
+
+        # sales.settings.taxes
+        for tax in _get_taxes(item['dispensary_id'], source_db):
+            item['location_specific']['sales']['taxes'] = {
+                'code': tax['name'],
+                'percent': tax['amount'],
+                'type': 'sales'
+            }
+
+        for pricing in etl.dicts(pricing_data):
+            item['location_specific']['inventory'] = {}
+            item['location_specific']['inventory']['weightPricing'] = {
+                'name': 'Default',
+                'defaultTier': True
+            }
+            item['location_specific']['inventory']['weightPricing']['breakpoints'] = {
+                'price_half_gram': pricing['price_half_gram'],
+                'price_gram': pricing['price_gram'],
+                'price_eighth': pricing['price_eigth'],
+                'price_quarter': pricing['price_quarter'],
+                'price_half': pricing['price_half'],
+                'price_ounce': pricing['price_ounce'],
+            }
 
         # monthly purchase limit is two week limit x2
         if item['hasLimits'] == 1:
             for limits in _medical_limits(item['dispensary_id'], source_db):
-                item['location']['members']['memberLimits'] = {
+                item['location_specific']['members']['memberLimits'] = {
                     'hasLimits': True,
                     'dailyPurchaseLimit': limits['daily_purchase_limit'],
                     'visitPurchaseLimit': limits['visit_purchase_limit'],

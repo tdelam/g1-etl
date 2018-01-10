@@ -44,6 +44,7 @@ def load_membership_prices(db, dispensary_id):
     
     return etl.fromdb(db, sql)
 
+
 def view_to_list(data):
     if type(data) is DbView or type(data) is CutView:
         # convert the view to a lists of lists for petl
@@ -117,7 +118,7 @@ def mongo_connect_and_insert(payload):
     Injects pre-generated unique _id.
     Inserts payload into the Imports collection.
     """
-    db = MongoClient('mongodb://localhost:3005/')
+    db = MongoClient('mongodb://localhost:3001/')
     imports = db.meteor.etl.imports
     # inject pre-generated and validated ObjectId String
     payload['_id'] = generate_unique_mongo_id(imports)
