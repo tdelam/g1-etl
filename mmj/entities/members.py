@@ -10,6 +10,7 @@ import petl as etl
 import json
 
 from collections import OrderedDict
+from datetime import datetime
 
 currentdir = os.path.dirname(os.path.abspath(
     inspect.getfile(inspect.currentframe()))
@@ -134,7 +135,9 @@ def transform(source_data, organization_id, debug):
 
         # replace None value dobs with the epoch beginning of time
         if not item['dateOfBirth']:
-            item['dateOfBirth'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(0))
+            dob = time.strftime('%Y-%m-%d %H:%M:%S.000Z', time.gmtime(0))
+            item['dateOfBirth'] = datetime.strptime(dob, '%Y-%m-%d %H:%M:%S.000Z')
+            
 
         del item['address']
         del item['city']
