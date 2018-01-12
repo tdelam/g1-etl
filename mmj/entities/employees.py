@@ -131,7 +131,7 @@ def _set_name(first_name, last_name, login):
 
 
 def _set_email(user_email, fake_email, debug):
-    if fake_email is True and debug is True:
+    if fake_email is True or debug is True:
         fake = Faker()
         return fake.safe_email()
     else:
