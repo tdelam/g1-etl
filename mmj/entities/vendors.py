@@ -68,20 +68,31 @@ def transform(source_data, organization_id, debug):
 
     vendors = []
     for item in etl.dicts(merged_vendors):
-        item['address'] = {
-            'line1': item['address'],
-            'line2': None,
-            'city': item['city'],
-            'state': item['state'],
-            'zip': item['zip'],
-            'country': item['country'],
-        }
+        if item['address'] is not None:
+            item['address'] = {
+                'line1': item['address'],
+                'line2': None,
+                'city': item['city'],
+                'state': item['state'],
+                'zip': item['zip'],
+                'country': item['country'],
+            }
+        else:
+            del item['address']
 
-        item['phone'] = [{
-            'name': 'business',
-            'number': item['phone'],
-            'default': True
-        }]
+        if item['licenceNumber'] is None or item['email'] is None or item['website'] is None:
+            del item['licenceNumber']
+            del item['email']
+            del item['website']
+
+        if item['phone'] is not None:
+            item['phone'] = [{
+                'name': 'business',
+                'number': item['phone'],
+                'default': True
+            }]
+        else:
+            del item['phone']
 
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
