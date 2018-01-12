@@ -65,7 +65,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
                      'name', 'sativa', 'indica', 'on_hold', 'product_type',
                      'image_file_name']
 
-    cut_prices = ['menu_item_id', 'price_half_gram', 'price_gram',
+    cut_prices = ['menu_item_id', 'dispensary_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
                   'price_half', 'price_ounce']
 
@@ -112,7 +112,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
     for item in etl.dicts(data):
         breakpoint_pricing = (
             etl
-            .select(prices_data, lambda x: x.menu_item_id == item['menu_id'])
+            .select(prices_data, lambda x: x.dispensary_id == item['dispensary_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
         )
@@ -158,8 +158,14 @@ def transform(mmj_menu_items, mmj_categories, prices,
             item['shareOnWM'] = False
 
         for price in etl.dicts(breakpoint_pricing):
+            try:
+                price_two_gram = price['price_two_gram']
+            except KeyError:
+                price_two_gram = 0.0
+
             item['locationProductDetails']['weightPricing'] = {
                'price_half_gram': price['price_half_gram'],
+               'price_two_gram': price_two_gram,
                'price_gram': price['price_gram'],
                'price_eighth': price['price_eighth'],
                'price_quarter': price['price_quarter'],

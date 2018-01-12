@@ -87,24 +87,28 @@ def transform(source_data, organization_id, debug):
             if not item['keys'][key]:
                 del item['keys'][key]
 
-        item['address'] = [{
-            'line1': item['address'],
-            'city': item['city'],
-            'state': item['state'],
-            'zip': item['zip_code'],
-            'country': item['country'],
-        }]
+        if item['city'] or item['address'] or item['state'] or item['zip_code'] or item['country']:
+            item['address'] = [{
+                'line1': item['address'],
+                'city': item['city'],
+                'state': item['state'],
+                'zip': item['zip_code'],
+                'country': item['country'],
+            }]
 
         name = re.sub(r'^(Dr(?:.)?s|(?:Dr.?))', '', item['name'], 
                       flags=re.IGNORECASE)
 
         item['name'] = name.strip()
 
-        item['phone'] = [{
-            'name': 'work',
-            'number': item['phone'],
-            'default': True
-        }]
+        if item['phone'] is not None:
+            item['phone'] = [{
+                'name': 'work',
+                'number': item['phone'],
+                'default': True
+            }]
+        else:
+            del item['phone']
         
         item['specialty'] = 'General'
 
@@ -113,6 +117,9 @@ def transform(source_data, organization_id, debug):
                 del item['licenceNumber']
                 del item['verificationWebsite']
                 del item['email']
+
+        if item['address'] is None:
+            del item['address']
 
         del item['city']
         del item['zip_code']
