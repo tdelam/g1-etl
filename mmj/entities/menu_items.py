@@ -141,6 +141,10 @@ def transform(mmj_menu_items, mmj_categories, prices,
             'strain_id': item['strain_id'],
             'category_id': item['category_id']
         }
+        
+        # set a default netMJ value if the menu item is a unit product
+        if item['unitOfMeasure'] is 2:
+            item['netMarijuana'] = 0
 
         for key in item['keys'].keys():
             if not item['keys'][key]:
