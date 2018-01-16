@@ -124,15 +124,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             if not item['keys'][key]:
                 del item['keys'][key]
 
-        # inventory.categories
-        item['categories'] = []
-        for category in _get_categories(item['dispensary_id'], source_db):
-            data = {
-                'name': category['name'],
-                'tax_free': False
-            }
-            item['categories'].append(data)
-
         """
         Member settings nested - crm.member.settings
         """
@@ -259,22 +250,6 @@ def _get_taxes(id, source_db):
         return etl.dicts(lookup_taxes)
     except KeyError:
         return 0
-
-
-def _get_categories(id, source_db):
-    """
-    get the categories for each dispensary_id
-    """
-    sql = ("SELECT dispensary_id, name "
-           "FROM categories "
-           "WHERE dispensary_id={0}").format(id)
-
-    data = etl.fromdb(source_db, sql) 
-    try:
-        categories = etl.select(data, lambda rec: rec.dispensary_id==id)
-        return etl.dicts(categories)
-    except KeyError:
-        return None
 
 
 def _member_type(type):

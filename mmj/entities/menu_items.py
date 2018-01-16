@@ -280,7 +280,7 @@ def _map_categories(category_id, sativa, indica, data, menu_items):
     """
     try:
         category = data.keys()[data.values().index(category_id)]
-        if category == 'Cannabis':
+        if category.lower() == 'cannabis':
             if sativa > 0 and indica > 0:
                 if sativa > 80:
                     return 'Sativa'
