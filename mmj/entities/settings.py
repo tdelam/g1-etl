@@ -125,8 +125,8 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         """
         Member settings nested - crm.member.settings
         """
-        item['crm_member_settings'] = {}
         if item['pp_enabled']:
+            item['crm_member_settings'] = {}
             item['crm_member_settings']['membershipLevel'] = {
                 'membershipLevelsEnabled': \
                     utils.true_or_false(item['membershipLevelsEnabled']),
@@ -156,9 +156,9 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
 
 
         # sales.settings.taxes
-        item['sales_settings'] = {}
+        item['sales_settings_taxes'] = {}
         for tax in _get_taxes(item['dispensary_id'], source_db):
-            item['sales_settings']['taxes'] = {
+            item['sales_settings_taxes']['taxes'] = {
                 'code': tax['name'],
                 'percent': tax['amount'],
                 'type': 'sales'
