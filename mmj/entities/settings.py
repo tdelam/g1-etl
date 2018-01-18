@@ -27,11 +27,10 @@ def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-011218"
-                                     ".cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = MySQLdb.connect(host="localhost",
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
     try:
         dispensary_details = utils.load_db_data(source_db, dispensary_id,
                                                 'dispensary_details')
@@ -185,9 +184,9 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             for limits in _medical_limits(item['dispensary_id'], source_db):
                 item['location_specific']['members']['medicalLimits'] = {
                     'hasLimits': True,
-                    'dailyPurchaseLimit': limits['daily_purchase_limit'],
-                    'visitPurchaseLimit': limits['visit_purchase_limit'],
-                    'dailyVisitLimit': limits['daily_visit_limit'],
+                    'dailyPurchaseLimit': int(limits['daily_purchase_limit']),
+                    'visitPurchaseLimit': int(limits['visit_purchase_limit']),
+                    'dailyVisitLimit': int(limits['daily_visit_limit']),
                     'monthlyPurchaseLimit': \
                         int(limits['two_week_purchase_limit'] * 2)
                 }
