@@ -27,10 +27,11 @@ def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="localhost",
-                                user="root",
-                                passwd="c0l3m4N",
-                                db="mmjmenu_development")
+    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-011218"
+                                     ".cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
+                                user="mmjmenu_app",
+                                passwd="V@e67dYBqcH^U7qVwqPS",
+                                db="mmjmenu_production")
     try:
         dispensary_details = utils.load_db_data(source_db, dispensary_id,
                                                 'dispensary_details')
