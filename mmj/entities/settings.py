@@ -171,13 +171,13 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
                 'defaultTier': True
             }
             item['location_specific']['inventory']['weightPricing']['breakpoints'] = {
-                'price_half_gram': pricing['price_half_gram'],
-                'price_gram': pricing['price_gram'],
-                'price_two_gram': pricing['price_two_gram'],
-                'price_eighth': pricing['price_eigth'],
-                'price_quarter': pricing['price_quarter'],
-                'price_half': pricing['price_half'],
-                'price_ounce': pricing['price_ounce'],
+                'price_half_gram': utils.dollars_to_cents(pricing['price_half_gram']),
+                'price_gram': utils.dollars_to_cents(pricing['price_gram']),
+                'price_two_gram': utils.dollars_to_cents(pricing['price_two_gram']),
+                'price_eighth': utils.dollars_to_cents(pricing['price_eigth']),
+                'price_quarter': utils.dollars_to_cents(pricing['price_quarter']),
+                'price_half': utils.dollars_to_cents(pricing['price_half']),
+                'price_ounce': utils.dollars_to_cents(pricing['price_ounce']),
             }
 
         # monthly purchase limit is two week limit x2

@@ -167,13 +167,13 @@ def transform(mmj_menu_items, mmj_categories, prices,
                 price_two_gram = 0.0
 
             item['locationProductDetails']['weightPricing'] = {
-               'price_half_gram': price['price_half_gram'],
-               'price_two_gram': price_two_gram,
-               'price_gram': price['price_gram'],
-               'price_eighth': price['price_eighth'],
-               'price_quarter': price['price_quarter'],
-               'price_half': price['price_half'],
-               'price_ounce': price['price_ounce']
+               'price_half_gram': utils.dollars_to_cents(price['price_half_gram']),
+               'price_two_gram': utils.dollars_to_cents(price_two_gram),
+               'price_gram': utils.dollars_to_cents(price['price_gram']),
+               'price_eighth': utils.dollars_to_cents(price['price_eighth']),
+               'price_quarter': utils.dollars_to_cents(price['price_quarter']),
+               'price_half': utils.dollars_to_cents(price['price_half']),
+               'price_ounce': utils.dollars_to_cents(price['price_ounce'])
             }
 
         del item['vendor_id']

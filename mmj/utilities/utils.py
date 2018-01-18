@@ -167,3 +167,8 @@ def create_epoch(dt):
     Returns epoch date/time
     """
     return int(dt.strftime('%s'))
+
+
+def dollars_to_cents(dollar):
+    cents = dollar * 100
+    return int(cents)
