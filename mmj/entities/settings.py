@@ -27,11 +27,10 @@ def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-011218"
-                                     ".cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = MySQLdb.connect(host="localhost",
+                                user="root",
+                                passwd="c0l3m4N",
+                                db="mmjmenu_development")
     try:
         dispensary_details = utils.load_db_data(source_db, dispensary_id,
                                                 'dispensary_details')
@@ -54,8 +53,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
 
     dispensary_cut_data = ['id', 'dispensary_id', 'menu_show_tax',
                            'logo_file_name', 'inactivity_logout',
-                           'calculate_even_totals',
-                           'default_customer_license_type',
+                           'calculate_even_totals', 
                            'require_customer_referrer',
                            'membership_fee_enabled',
                            'pp_enabled',
@@ -101,7 +99,6 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'menu_show_tax': 'enableTaxesIn',
             # <Location> -> Sales -> PRICE ROUNDING
             'calculate_even_totals': 'hasPriceRounding',
-            'default_customer_license_type': 'memberType',
             # <Location> -> Members -> REFERRER REQUIRED
             'require_customer_referrer': 'mandatoryReferral',
             # <Location> -> Members -> PAID VISITS
@@ -112,7 +109,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'mmjrevu_api_key': 'apiKey'
         })
     )
-    settings = []
+    settings = {}
     for item in etl.dicts(merged_settings):
         item['keys'] = {
             'dispensary_id': item['dispensary_id'],
@@ -127,8 +124,9 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         """
         Member settings nested - crm.member.settings
         """
+        item['crm.member.settings'] = {}
         if item['pp_enabled']:
-            item['member_settings']['membershipLevel'] = {
+            item['crm.member.settings']['membershipLevel'] = {
                 'membershipLevelsEnabled': \
                     utils.true_or_false(item['membershipLevelsEnabled']),
                 'levelName': 'Unnamed',
@@ -140,24 +138,26 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         """
         Location ettings nested. 
         """
-        item['location_specific'] = {}
+        if item['apiKey']:
+            item['location_specific'] = {
+                'apiKey': item['apiKey']
+            }
+        else:
+            item['location_specific'] = {}
         item['location_specific']['members'] = {
             'paidVisitsEnabled': utils.true_or_false(item['paidVisitsEnabled']),
             'mandatoryReferral': utils.true_or_false(item['mandatoryReferral'])
         }
         item['location_specific']['sales'] = {
             'enableTaxesIn': utils.true_or_false(item['enableTaxesIn']),
-            'hasPriceRounding': utils.true_or_false(item['hasPriceRounding']),
-            'memberType': _member_type(item['memberType'])
-        }
-        item['location_specific']['general'] = {
-            'apiKey': item['apiKey']
+            'hasPriceRounding': utils.true_or_false(item['hasPriceRounding'])
         }
 
 
         # sales.settings.taxes
+        item['sales.settings'] = {}
         for tax in _get_taxes(item['dispensary_id'], source_db):
-            item['location_specific']['sales']['taxes'] = {
+            item['sales.settings']['taxes'] = {
                 'code': tax['name'],
                 'percent': tax['amount'],
                 'type': 'sales'
@@ -182,7 +182,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         # monthly purchase limit is two week limit x2
         if item['hasLimits'] == 1:
             for limits in _medical_limits(item['dispensary_id'], source_db):
-                item['location_specific']['members']['memberLimits'] = {
+                item['location_specific']['members']['medicalLimits'] = {
                     'hasLimits': True,
                     'dailyPurchaseLimit': limits['daily_purchase_limit'],
                     'visitPurchaseLimit': limits['visit_purchase_limit'],
@@ -206,20 +206,18 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         del item['hasPriceRounding']
         del item['dollarsPerPoint']
         del item['mandatoryReferral']
-        del item['memberType']
         del item['paidVisitsEnabled']
         del item['pointsPerDollar']
         del item['pp_enabled']
         del item['referralPoints']
 
         # set up final structure for API
-        settings.append(item)
+        settings.update(item)
 
     if debug:
         result = json.dumps(settings, sort_keys=True, indent=4,
                             default=utils.json_serial)
         print(result)
-
     return settings
 
 
@@ -251,15 +249,6 @@ def _get_taxes(id, source_db):
         return etl.dicts(lookup_taxes)
     except KeyError:
         return 0
-
-
-def _member_type(type):
-    """
-    Convert memberType mapping to string format for G1
-    """
-    if type == 1:
-        return 'MEDICAL'
-    return 'RECREATIONAL'
 
 
 if __name__ == '__main__':
