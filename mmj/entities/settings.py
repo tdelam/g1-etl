@@ -117,6 +117,18 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'id': item['id']
         }
 
+        url = None
+        if debug and item['image'] is not None:
+            url = ("https://wm-mmjmenu-images-development.s3."
+                   "amazonaws.com/logos/{0}/original/"
+                   "{1}").format(item['id'], item['image'])
+        elif item['image'] is not None:
+            url = ("https://wm-mmjmenu-images-production.s3."
+                   "amazonaws.com/logos/{0}/original/"
+                   "{1}").format(item['id'], item['image'])
+
+        item['image'] = url
+
         # remove any item['keys'] tuples with None values
         for key in item['keys'].keys():
             if not item['keys'][key]:
@@ -145,6 +157,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             }
         else:
             item['location_specific'] = {}
+
         item['location_specific']['members'] = {
             'paidVisitsEnabled': utils.true_or_false(item['paidVisitsEnabled']),
             'mandatoryReferral': utils.true_or_false(item['mandatoryReferral'])
