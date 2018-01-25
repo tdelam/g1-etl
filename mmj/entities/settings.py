@@ -152,7 +152,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             }
 
         """
-        Location ettings nested. 
+        Location settings nested.
         """
         if item['apiKey']:
             item['location_specific'] = {
@@ -176,7 +176,7 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
         for tax in _get_taxes(item['dispensary_id'], source_db):
             item['sales_settings_taxes']['taxes'] = {
                 'code': tax['name'],
-                'percent': tax['amount'],
+                'percent': tax['amount'] / 100,
                 'type': 'sales'
             }
 
