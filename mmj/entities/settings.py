@@ -116,6 +116,9 @@ def transform(dispensary_details, pricing, organization_id, debug, source_db):
             'dispensary_id': item['dispensary_id'],
             'id': item['id']
         }
+        
+        # if not item['sessionTimeoutDuration'] >= 30:
+        #     del item['sessionTimeoutDuration']
 
         url = None
         if debug and item['image'] is not None:
