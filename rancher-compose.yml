@@ -1,0 +1,27 @@
+#
+# Rancher Compose is a variant of Docker Compose. It supports multi-host
+# environments where the containers started by Rancher Compose are deployed to
+# one or more of the hosts in that environment.
+#
+# The `rancher-compose.yml` file extends the `docker-compose.yml` file with
+# features and configuration necessary to allow Rancher to do what it needs to.
+# For example, scaling information, health checks, and other environment-related
+# information resides here.
+#
+# More info: https://docs.rancher.com/rancher/v1.4/en/cattle/rancher-compose/
+#
+version: '2'
+services:
+
+  etl:
+    scale: 1
+    start_on_create: true
+    health_check:
+      port: 5000
+      request_line: GET /healthcheck HTTP/1.0
+      interval: 5000
+      initializing_timeout: 60000
+      unhealthy_threshold: 3
+      strategy: recreate
+      healthy_threshold: 2
+      response_timeout: 2000

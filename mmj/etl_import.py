@@ -6,6 +6,7 @@ from utilities import utils
 from entities import employees, members, menu_items, physicians, vendors, settings
 
 def extract(dispensary_id, organization_id):
+    mongo = utils.mongo_connect();
     settings_extract = settings.extract(dispensary_id, organization_id, False)
     employees_extract = employees.extract(dispensary_id, organization_id, False, True)
     members_extract = members.extract(dispensary_id, organization_id, False)
@@ -63,7 +64,7 @@ def extract(dispensary_id, organization_id):
         outfile.write(result)
 
     #connect to the G1 POS db and insert the tranformed payload
-    utils.mongo_connect_and_insert(payload)
+    utils.mongo_insert(mongo, payload)
 
     # the rest endpoint needs a formatted result here indicating success of the
     # extraction process

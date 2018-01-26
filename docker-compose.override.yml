@@ -1,0 +1,22 @@
+#
+# This file is automatically loaded by Docker Compose in order to extend the
+# base `docker-compose.yml` file. Replacements are handled thusly:
+#
+# String|Integer - Replaced
+# Array|Object - Merged or appended/prepended
+#
+# This file is used to set local dev-specific overrides for volumes, ports, and
+# other configurations. This file only applies if you are using Docker Compose
+# locally for testing, which should be the case in the majority of situations.
+# `docker-compose.rancher.yml` should only be needed if you're running Rancher
+# locally.
+#
+# More info: https://docs.docker.com/compose/extends/
+#
+version: '2'
+services:
+  etl:
+    ports:
+      - 5000:5000
+    volumes:
+      - ./:/workspace

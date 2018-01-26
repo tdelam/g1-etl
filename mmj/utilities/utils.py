@@ -1,7 +1,9 @@
+import os
 import urllib2
 import logging
 import logging.handlers
 import time
+import MySQLdb
 
 from datetime import date, datetime
 from calendar import timegm
@@ -111,15 +113,19 @@ def chunks(data, size):
     chunk = [data[i:i + size] for i in range(0, len(data), size)]
     return chunk
 
-
-def mongo_connect_and_insert(payload):
+def mongo_connect():
     """
     Connects to mongodb.
+    Throws KeyError if ETL_MONGO_URL var is not found
+    """
+    return MongoClient(os.environ['ETL_POS_MONGO_HOST'])
+
+def mongo_insert(mongo, payload):
+    """
     Injects pre-generated unique _id.
     Inserts payload into the Imports collection.
     """
-    db = MongoClient('mongodb://localhost:3001/')
-    imports = db.meteor.etl.imports
+    imports = mongo.meteor.etl.imports
     # inject pre-generated and validated ObjectId String
     payload['_id'] = generate_unique_mongo_id(imports)
     imports.insert_one(payload)  # insert paylaod
@@ -172,3 +178,9 @@ def create_epoch(dt):
 def dollars_to_cents(dollar):
     cents = dollar * 100
     return int(cents)
+
+def mysql_connect():
+    return MySQLdb.connect(host=os.environ['ETL_MMJM_MYSQL_HOST'],
+                                user=os.environ['ETL_MMJM_MYSQL_USER'],
+                                passwd=os.environ['ETL_MMJM_MYSQL_PASS'],
+                                db=os.environ['ETL_MMJM_MYSQL_NAME'])
