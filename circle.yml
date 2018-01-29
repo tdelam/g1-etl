@@ -1,0 +1,30 @@
+machine:
+  node:
+    version: 6.10.3
+  timezone:
+    America/Los_Angeles
+  environment:
+    DOCKER_REGISTRY: docker-registry.weedmaps.com
+    SHA: ":$CIRCLE_SHA1"
+    BRANCH: $CIRCLE_BRANCH
+    REPOSITORY: ${CIRCLE_PROJECT_REPONAME}
+    APPLICATION_ENVIRONMENT: production
+    PATH: "${PATH}:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
+
+test:
+ post:
+   - wget -O jenkins_credentials https://provision-weedmaps.s3-us-west-2.amazonaws.com/jenkins_credentials
+   - curl https://provision-weedmaps.s3-us-west-2.amazonaws.com/bin/crypto | bash /dev/stdin -d jenkins_credentials
+
+deployment:
+  master:
+    branch: "master"
+    commands:
+      - curl https://provision-weedmaps.s3-us-west-2.amazonaws.com/bin/start_jenkins_task.sh | JENKINS_JOB=build_docker_images bash
+      - curl https://provision-weedmaps.s3-us-west-2.amazonaws.com/bin/start_jenkins_task.sh | APPLICATION_ENVIRONMENT=production DEPLOY_ENVIRONMENT=admin-vpc JENKINS_JOB=rancher_deploy bash
+
+  test:
+    branch: "test"
+    commands:
+      - curl https://provision-weedmaps.s3-us-west-2.amazonaws.com/bin/start_jenkins_task.sh | JENKINS_JOB=build_docker_images bash
+      - curl https://provision-weedmaps.s3-us-west-2.amazonaws.com/bin/start_jenkins_task.sh | APPLICATION_ENVIRONMENT=production DEPLOY_ENVIRONMENT=test JENKINS_JOB=rancher_deploy bash

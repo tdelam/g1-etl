@@ -3,7 +3,6 @@ from __future__ import division, print_function, absolute_import
 import os
 import sys
 import inspect
-import MySQLdb
 import petl as etl
 import json
 import datetime 
@@ -28,11 +27,7 @@ def extract(dispensary_id, organization_id, debug, fake_email):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-011218"
-                                     ".cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = utils.mysql_connect()
     try:
         mmj_employees = utils.load_employees(source_db, dispensary_id)
 

@@ -5,7 +5,6 @@ import time
 import os
 import sys
 import inspect
-import MySQLdb
 import petl as etl
 import json
 
@@ -28,11 +27,7 @@ def extract(dispensary_id, organization_id, debug):
     """
     Grab all data from source(s).
     """
-    source_db = MySQLdb.connect(host="mmjmenu-production-copy-playground-011218"
-                                     ".cmtxwpwvylo7.us-west-2.rds.amazonaws.com",
-                                user="mmjmenu_app",
-                                passwd="V@e67dYBqcH^U7qVwqPS",
-                                db="mmjmenu_production")
+    source_db = utils.mysql_connect()
     try:
         source_data = utils.load_db_data(source_db, dispensary_id, 'customers')
         return transform(source_data, organization_id, debug)
