@@ -28,9 +28,9 @@ WORKDIR /workspace
 COPY . /workspace
 
 RUN apk update \
-
-	# Add build-time dependencies, and create a virtual name for them so we can
- 	# remove them later
+    \
+	# Add build-time dependencies, and create a virtual name for them so we can \
+ 	# remove them later \
  	&& apk --no-cache add --virtual build-dependencies \
 		build-base \
 		py-mysqldb \
@@ -39,17 +39,17 @@ RUN apk update \
 		libffi-dev \
 		mariadb-dev \
 		python-dev \
-
- 	# Install application requirements
+    \
+ 	# Install application requirements \
  	&& pip install -r requirements.txt \
-
- 	# Remove pip cache. Drops image size by >50%.
+    \
+ 	# Remove pip cache. Drops image size by >50%. \
  	&& rm -rf ~/.cache/pip \
-
- 	# Add runtime dependencies
+    \
+ 	# Add runtime dependencies \
  	&& apk --no-cache add mariadb-client-libs \
-
- 	# Remove build dependencies
+    \
+ 	# Remove build dependencies \
  	&& apk del build-dependencies
 
 USER py
