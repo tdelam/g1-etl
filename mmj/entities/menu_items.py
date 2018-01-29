@@ -28,7 +28,10 @@ sys.setdefaultencoding('latin-1')
 
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
-
+CAT_MAP = ['Indica', 'Sativa', 'Hybrid', 'Edible', 
+           'Concentrate', 'Drink', 'Clone', 'Seed', 
+           'Tinctures', 'Gear', 'Topicals', 'Preroll',
+           'Wax', 'Hash']
 
 def extract(dispensary_id, organization_id, debug):
     """
@@ -278,30 +281,27 @@ def _map_categories(category_id, sativa, indica, data, menu_items):
     if neither it goes into hybrid. The other conditions within this will
     map to G1's naming convention, i.e: MMJ Drinks => G1 Drink
     """
-    try:
-        category = data.keys()[data.values().index(category_id)]
-        if category.lower() == 'cannabis':
-            if sativa > 0 and indica > 0:
-                if sativa > 80:
-                    return 'Sativa'
-                if indica > 80:
-                    return 'Indica'
-            else:
-                return 'Hybrid'
-
-        if category == 'Paraphernalia':
-            return 'Gear'
-        if category == 'Tincture':
-            return 'Tinctures'
-        if category == 'Prerolled':
-            return 'Preroll'
-
-        if category in PLURAL_CATEGORIES:
-            return singularize(category)
+    category = data.keys()[data.values().index(category_id)]
+    if category.lower() == 'cannabis':
+        if sativa > 0 and indica > 0:
+            if sativa > 80:
+                return 'Sativa'
+            if indica > 80:
+                return 'Indica'
         else:
-            return category
-    except ValueError:
+            return 'Hybrid'
+
+    if category.lower() == 'paraphernalia':
+        return 'Gear'
+    if category.lower() == 'tincture':
+        return 'Tinctures'
+    if category.lower() == 'prerolled':
+        return 'Preroll'
+    if category in PLURAL_CATEGORIES:
+        return singularize(category)
+    if category not in CAT_MAP:
         return 'Other'
+    return category
 
 
 def lab_results(data):
