@@ -82,7 +82,7 @@ def transform(source_data, organization_id, debug):
         lambda x: utils.true_or_false(x.given_caregivership)
     member_mapping['identificationNumber'] = 'drivers_license_no'
     member_mapping['points'] = 'points'
-    member_mapping['expiryDate'] = 'card_expires_at'
+    member_mapping['card_expires_at'] = 'card_expires_at'
     member_mapping['taxExempt'] = lambda x: utils.true_or_false(x.tax_exempt)
     member_mapping['locked_visits'] = 'locked_visits'
     member_mapping['locked_visits_reason'] = 'accountStatusNotes'
@@ -100,6 +100,7 @@ def transform(source_data, organization_id, debug):
 
     members = []
     for item in etl.dicts(member_fields):
+        
         item['keys'] = {
             'id': item['id'],
             'caregiver_id': item['caregiver_id'],
@@ -110,6 +111,9 @@ def transform(source_data, organization_id, debug):
             'picture_file_name': item['picture_file_name'],
             'organization_id': item['organization_id'],
         }
+
+        if item['card_expires_at'] is not None:
+            item['expiryDate'] = item['card_expires_at']
 
         # remove any item['keys'] tuples with None values
         for key in item['keys'].keys():
@@ -131,7 +135,6 @@ def transform(source_data, organization_id, debug):
         if not item['dateOfBirth']:
             dob = time.strftime('%Y-%m-%d %H:%M:%S.000Z', time.gmtime(0))
             item['dateOfBirth'] = datetime.strptime(dob, '%Y-%m-%d %H:%M:%S.000Z')
-            
 
         del item['address']
         del item['city']
@@ -147,7 +150,8 @@ def transform(source_data, organization_id, debug):
         del item['picture_file_name']
         del item['locked_visits_reason']
         del item['locked_visits']
-
+        del item['card_expires_at']
+        
         members.append(item)
 
     if debug:

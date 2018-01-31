@@ -23,7 +23,7 @@ from utilities import utils
 
 # handle characters outside of ascii
 reload(sys)
-sys.setdefaultencoding('latin-1')
+sys.setdefaultencoding("latin-1")
 
 # sanitize categories, need a better way to do this, perhaps a stemming lib
 PLURAL_CATEGORIES = ['Seeds', 'Drinks', 'Edibles']
@@ -60,7 +60,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
     cut_menu_data = ['id', 'vendor_id', 'menu_id', 'dispensary_id',
                      'strain_id', 'created_at', 'updated_at', 'category_id',
                      'name', 'sativa', 'indica', 'on_hold', 'product_type',
-                     'image_file_name']
+                     'image_file_name', 'medicine_amount', 'product_type']
 
     cut_prices = ['menu_item_id', 'dispensary_id', 'price_half_gram', 'price_gram',
                   'price_two_gram', 'price_eigth', 'price_quarter',
@@ -107,13 +107,13 @@ def transform(mmj_menu_items, mmj_categories, prices,
 
     items = []
     for item in etl.dicts(data):
+        
         breakpoint_pricing = (
             etl
             .select(prices_data, lambda x: x.dispensary_id == item['dispensary_id'])
             .rename({'price_eigth': 'price_eighth'})
             .cutout('menu_item_id')
         )
-
         # Set image url for load to download
         url = None
         if debug and item['image_file_name'] is not None:
@@ -141,7 +141,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
         
         # set a default netMJ value if the menu item is a unit product
         if item['unitOfMeasure'] is 2:
-            item['netMarijuana'] = 0
+            item['netMarijuana'] = int(item['medicine_amount'])
 
         for key in item['keys'].keys():
             if not item['keys'][key]:
@@ -226,7 +226,6 @@ def _restock_level(id, product_type, source_db):
     else:
         level = etl.lookup(data, 'dispensary_id', 'units_hold_at')
     return level[id][0]
-        
 
 
 def _wm_integration(id, source_db):

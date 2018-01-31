@@ -179,6 +179,7 @@ def dollars_to_cents(dollar):
     cents = dollar * 100
     return int(cents)
 
+
 def mysql_connect():
     return MySQLdb.connect(host=os.environ['ETL_MMJM_MYSQL_HOST'],
                                 user=os.environ['ETL_MMJM_MYSQL_USER'],
