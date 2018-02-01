@@ -193,10 +193,16 @@ def transform(mmj_menu_items, mmj_categories, prices,
         # set up final structure for API
         items.append(item)
 
+    # Remove inactive items
+    for item in items:
+        if item['locationProductDetails']['active'] is False:
+            items.remove(item)
+
     if debug:
         result = json.dumps(items, sort_keys=True,
                             indent=4, default=utils.json_serial)
         print(result)
+
 
     return items
 
