@@ -71,6 +71,7 @@ def transform(source_data, organization_id, debug):
     member_mapping['picture_file_name'] = 'picture_file_name'
     member_mapping['dateOfBirth'] = 'dob'
     member_mapping['name'] = 'name'
+    member_mapping['phone_number'] = 'phone_number'
     member_mapping['email'] = 'email'
     member_mapping['organization_id'] = 'organization_id'
     # MEDICAL 1, RECREATIONAL 2
@@ -136,7 +137,7 @@ def transform(source_data, organization_id, debug):
             dob = time.strftime('%Y-%m-%d %H:%M:%S.000Z', time.gmtime(0))
             item['dateOfBirth'] = datetime.strptime(dob, '%Y-%m-%d %H:%M:%S.000Z')
 
-        del item['address']
+        #del item['address']
         del item['city']
         del item['zip_code']
         del item['state']

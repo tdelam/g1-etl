@@ -189,7 +189,7 @@ def transform(mmj_menu_items, mmj_categories, prices,
 
         if item['image_file_name'] is None:
             del item['image_file_name']
-
+            
         # set up final structure for API
         items.append(item)
 
