@@ -26,7 +26,7 @@ def load_db_data(db, dispensary_id, table_name):
     Data extracted from source db
     """
     sql = ("SELECT * from {0} WHERE "
-           "dispensary_id={1} LIMIT").format(table_name, dispensary_id)
+           "dispensary_id={1}").format(table_name, dispensary_id)
 
     return etl.fromdb(db, sql)
 
